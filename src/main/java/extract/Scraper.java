@@ -124,13 +124,14 @@ public class Scraper {
 
 	public static String generateFileName(String folderPath) {
 		String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy_HH-mm-ss"));
-		// Tạo thư mục nếu chưa tồn tại
-		String projectRoot = System.getProperty("user.dir");
+		// Create directory if it doesn't exist
 		File folder = new File(folderPath);
-		if (!folder.exists())
+		if (!folder.exists()) {
 			folder.mkdirs();
+		}
 
-		return folderPath + "/weather_log(" + timestamp + ").csv";
+		// Use File.separator for cross-platform compatibility
+		return folder.getAbsolutePath() + File.separator + "weather_log(" + timestamp + ").csv";
 	}
 
 	public static double writeToCSV(WeatherData data, String filePath) {

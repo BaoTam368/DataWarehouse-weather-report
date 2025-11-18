@@ -6,6 +6,8 @@ import config.Config;
 import java.io.File;
 
 import extract.*;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 public class Test {
 
@@ -18,7 +20,9 @@ public class Test {
 		System.out.println("Src Folder Path: " + config.source.source_folder_path);
         System.out.println("Src Transaction Path: " + config.transaction.source_folder_path);
 
-		WeatherData data = Scraper.fetchWeatherData(config.source.source_url);
+        String url = config.source.source_url;
+        Document doc = Jsoup.connect(url).get();
+        WeatherData data = Scraper.fetchWeatherData(doc);
 		String fileName = Scraper.generateFileName(config.source.source_folder_path);
 		Scraper.writeToCSV(data, fileName);
 		
