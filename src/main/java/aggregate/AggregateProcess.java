@@ -1,4 +1,4 @@
-package transform;
+package aggregate;
 
 import database.DataBase;
 import org.apache.ibatis.jdbc.ScriptRunner;
@@ -7,16 +7,17 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.sql.Connection;
 
-public class TransformProcess {
+public class AggregateProcess {
 
-    public void runTransform(String transactionSqlPath) {
-        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", "staging")) {
+    public void runAggregate(String aggregateSqlPath) {
+
+        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", "warehouse")) {
             // Kết nối DB warehouse
             if (conn != null) {
                 conn.setAutoCommit(false);
 
                 try {
-                    executeSqlScript(conn, transactionSqlPath);
+                    executeSqlScript(conn, aggregateSqlPath);
                     conn.commit();
                     System.out.println("Aggregate thành công!");
                 } catch (Exception ex) {
@@ -29,14 +30,10 @@ public class TransformProcess {
         }
     }
 
-    /**
-     * Dùng MyBatis ScriptRunner để chạy script .sql
-     */
     private void executeSqlScript(Connection conn, String filePath) throws Exception {
         ScriptRunner runner = new ScriptRunner(conn);
-
         runner.setSendFullScript(false);
-        runner.setLogWriter(null);          // tắt log chi tiết ra console
+        runner.setLogWriter(null);
         runner.setErrorLogWriter(null);
 
         try (Reader reader = new FileReader(filePath)) {

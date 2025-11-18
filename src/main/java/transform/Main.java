@@ -10,11 +10,9 @@ public class Main {
     public static void main(String[] args) throws IOException {
         XmlMapper xmlMapper = new XmlMapper();
         Config config = xmlMapper.readValue(new File("config.xml"), Config.class);
-        // Lấy thư mục gốc của project (nơi em chạy `java ...` hoặc `mvn exec:java`)
-        String projectRoot = System.getProperty("user.dir");
-
-        // Ghép path tương đối đến file transaction.sql
         String transactionSqlPath = "database/staging/transaction.sql";
+
+        String projectRoot = System.getProperty("user.dir");
 
         System.out.println("Project root: " + projectRoot);
         System.out.println("Transaction script: " + transactionSqlPath);

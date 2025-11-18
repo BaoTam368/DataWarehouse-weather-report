@@ -9,4 +9,5 @@ public class Config {
     public Source source;
     public Extract extract;
     public Transaction transaction;
+    public Aggregate aggregate;
 }

@@ -19,4 +19,8 @@
         <source_folder_path>database/staging/transaction.sql</source_folder_path>
     </transaction>
 
+    <aggregate>
+        <source_folder_path>database/warehouse/aggregate.sql</source_folder_path>
+    </aggregate>
+
 </config>

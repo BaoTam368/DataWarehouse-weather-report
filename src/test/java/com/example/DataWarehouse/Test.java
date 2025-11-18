@@ -19,6 +19,7 @@ public class Test {
 		System.out.println("Port: " + config.database.port);
 		System.out.println("Src Folder Path: " + config.source.source_folder_path);
         System.out.println("Src Transaction Path: " + config.transaction.source_folder_path);
+        System.out.println("Src Aggregate Path: " + config.aggregate.source_folder_path);
 
         String url = config.source.source_url;
         Document doc = Jsoup.connect(url).get();
