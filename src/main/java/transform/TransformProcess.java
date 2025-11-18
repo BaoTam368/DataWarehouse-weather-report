@@ -1,8 +1,7 @@
 package transform;
 
+import database.DataBase;
 import org.apache.ibatis.jdbc.ScriptRunner;
-import util.DBConnection;
-import util.ProcessLogDAO;
 
 import java.io.FileReader;
 import java.io.Reader;
@@ -10,32 +9,24 @@ import java.sql.Connection;
 
 public class TransformProcess {
 
-    private final ProcessLogDAO processLogDAO = new ProcessLogDAO();
-
-    public void runTransform(int sourceId, String transactionSqlPath) {
+    public void runTransform(String transactionSqlPath) {
         Connection conn = null;
         try {
-            conn = DBConnection.getRootConnection();
+            conn = DataBase.connectDB("localhost", 3306, "root", "1234", "staging");
             conn.setAutoCommit(false);
-
-            long processId = processLogDAO.startTransformProcess(conn, sourceId);
 
             try {
                 executeSqlScript(conn, transactionSqlPath);
 
                 conn.commit();
-                processLogDAO.finishTransformProcess(conn, processId, "SUCCESS", null);
                 System.out.println("Transform thành công!");
             } catch (Exception ex) {
                 conn.rollback();
-                processLogDAO.finishTransformProcess(conn, processId, "FAILED", ex.getMessage());
                 ex.printStackTrace();
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            DBConnection.closeQuietly(conn);
         }
     }
 

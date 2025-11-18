@@ -1,18 +1,9 @@
 package com.example.DataWarehouse;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import com.fasterxml.*;
-import com.fasterxml.jackson.core.exc.StreamReadException;
-import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import config.Config;
-import database.Control;
-import database.DataBase;
-
 import java.io.File;
-import java.sql.Connection;
 
 import extract.*;
 
@@ -22,14 +13,15 @@ public class Test {
 		XmlMapper xmlMapper = new XmlMapper();
 		Config config = xmlMapper.readValue(new File("config.xml"), Config.class);
 
-		Connection conn = DataBase.connectDB(config.database.host, config.database.port, config.database.user,
-				config.database.password, "control");
+		System.out.println("Host: " + config.database.host);
+		System.out.println("Port: " + config.database.port);
+		System.out.println("Src Folder Path: " + config.source.source_folder_path);
+        System.out.println("Src Transaction Path: " + config.transaction.source_folder_path);
 
-		int source_id = Control.insertConfigSource(conn, config.source.source_name, config.source.source_url,
-				config.source.source_folder_path, "csv", config.extract.process_code, "?", "?", "?", "?", "?", "?");
-
-		Main.main(args, conn, config, source_id);
-
+		WeatherData data = Scraper.fetchWeatherData(config.source.source_url);
+		String fileName = Scraper.generateFileName(config.source.source_folder_path);
+		Scraper.writeToCSV(data, fileName);
+		
 	}
 
 }
