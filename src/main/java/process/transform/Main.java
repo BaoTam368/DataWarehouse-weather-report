@@ -1,24 +1,20 @@
-package transform;
+package process.transform;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import config.Config;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws IOException {
         XmlMapper xmlMapper = new XmlMapper();
         Config config = xmlMapper.readValue(new File("config.xml"), Config.class);
-        String transactionSqlPath = "database/staging/transaction.sql";
+        List<String> paths = config.transaction.scripts;
 
-        String projectRoot = System.getProperty("user.dir");
-
-        System.out.println("Project root: " + projectRoot);
-        System.out.println("Transaction script: " + transactionSqlPath);
-
-        // Gọi process transform
+        // Gọi process transform để chạy danh sách script transform
         TransformProcess process = new TransformProcess();
-        process.runTransform(config.transaction.source_folder_path);
+        process.runTransform(paths);
     }
 }

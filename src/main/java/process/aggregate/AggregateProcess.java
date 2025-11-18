@@ -1,4 +1,4 @@
-package transform;
+package process.aggregate;
 
 import database.DataBase;
 import org.apache.ibatis.jdbc.ScriptRunner;
@@ -6,37 +6,37 @@ import org.apache.ibatis.jdbc.ScriptRunner;
 import java.io.FileReader;
 import java.io.Reader;
 import java.sql.Connection;
+import java.util.List;
 
-public class TransformProcess {
+public class AggregateProcess {
 
-    public void runTransform(String transactionSqlPath) {
-        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", "staging")) {
+    public void runAggregate(List<String> aggregateSqlPath) {
+
+        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", "warehouse")) {
             // Kết nối DB warehouse
             if (conn != null) {
                 conn.setAutoCommit(false);
 
                 try {
-                    executeSqlScript(conn, transactionSqlPath);
+                    for (String path : aggregateSqlPath) {
+                        executeSqlScript(conn, path);
+                    }
                     conn.commit();
-                    System.out.println("Aggregate thành công!");
+                    System.out.println("Aggregate weather daily thành công!");
                 } catch (Exception ex) {
                     conn.rollback();
-                    ex.printStackTrace();
+                    System.out.println("Aggregate weather daily thất bại!");
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Kết nối thất bại!");
         }
     }
 
-    /**
-     * Dùng MyBatis ScriptRunner để chạy script .sql
-     */
     private void executeSqlScript(Connection conn, String filePath) throws Exception {
         ScriptRunner runner = new ScriptRunner(conn);
-
         runner.setSendFullScript(false);
-        runner.setLogWriter(null);          // tắt log chi tiết ra console
+        runner.setLogWriter(null);
         runner.setErrorLogWriter(null);
 
         try (Reader reader = new FileReader(filePath)) {

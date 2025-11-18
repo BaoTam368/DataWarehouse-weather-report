@@ -1,4 +1,4 @@
-package aggregate;
+package process.aggregate;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import config.Config;
@@ -10,9 +10,9 @@ public class Main {
     public static void main(String[] args) throws IOException {
         XmlMapper xmlMapper = new XmlMapper();
         Config config = xmlMapper.readValue(new File("config.xml"), Config.class);
-        String aggregateSqlPath = config.aggregate.source_folder_path;
 
+        // Gọi process aggregate
         AggregateProcess process = new AggregateProcess();
-        process.runAggregate(aggregateSqlPath);
+        process.runAggregate(config.aggregate.scripts);
     }
 }

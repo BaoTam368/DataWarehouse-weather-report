@@ -5,9 +5,10 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import config.Config;
 import java.io.File;
 
-import extract.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import process.extract.Scraper;
+import process.extract.WeatherData;
 
 public class Test {
 
@@ -18,8 +19,9 @@ public class Test {
 		System.out.println("Host: " + config.database.host);
 		System.out.println("Port: " + config.database.port);
 		System.out.println("Src Folder Path: " + config.source.source_folder_path);
-        System.out.println("Src Transaction Path: " + config.transaction.source_folder_path);
-        System.out.println("Src Aggregate Path: " + config.aggregate.source_folder_path);
+        System.out.println("Src Transaction Path: " + config.transaction.scripts);
+        System.out.println("Src Aggregate Path: " + config.aggregate.scripts);
+        System.out.println("Src Aggregate Path: " + config.mart.scripts);
 
         String url = config.source.source_url;
         Document doc = Jsoup.connect(url).get();
