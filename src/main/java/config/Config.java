@@ -10,4 +10,5 @@ public class Config {
     public Extract extract;
     public Transaction transaction;
     public Aggregate aggregate;
+    public Mart mart;
 }

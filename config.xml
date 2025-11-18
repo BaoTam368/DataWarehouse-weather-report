@@ -16,11 +16,15 @@
     </source>
 
     <transaction>
-        <source_folder_path>database/staging/transaction.sql</source_folder_path>
+        <script>database/staging/transaction.sql</script>
     </transaction>
 
     <aggregate>
-        <source_folder_path>database/warehouse/aggregate.sql</source_folder_path>
+        <script>database/warehouse/aggregate_weather_daily.sql</script>
     </aggregate>
+
+    <mart>
+        <script>database/mart/mart_weather_daily_load.sql</script>
+    </mart>
 
 </config>

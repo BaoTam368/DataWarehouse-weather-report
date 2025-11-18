@@ -5,7 +5,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 import java.util.List;
 
-public class Aggregate {
+public class Mart {
     @JacksonXmlElementWrapper(useWrapping = false)
     @JacksonXmlProperty(localName = "script")
     public List<String> scripts;

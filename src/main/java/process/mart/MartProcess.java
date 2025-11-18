@@ -1,4 +1,4 @@
-package aggregate;
+package process.mart;
 
 import database.DataBase;
 import org.apache.ibatis.jdbc.ScriptRunner;
@@ -6,27 +6,28 @@ import org.apache.ibatis.jdbc.ScriptRunner;
 import java.io.FileReader;
 import java.io.Reader;
 import java.sql.Connection;
+import java.util.List;
 
-public class AggregateProcess {
-
-    public void runAggregate(String aggregateSqlPath) {
-
-        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", "warehouse")) {
-            // Kết nối DB warehouse
+public class MartProcess {
+    public void runMart(List<String> martSqlPath) {
+        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", "mart_weather")) {
+            // Kết nối DB mart_weather
             if (conn != null) {
                 conn.setAutoCommit(false);
 
                 try {
-                    executeSqlScript(conn, aggregateSqlPath);
+                    for (String path : martSqlPath) {
+                        executeSqlScript(conn, path);
+                    }
                     conn.commit();
-                    System.out.println("Aggregate thành công!");
+                    System.out.println("load mart thành công!");
                 } catch (Exception ex) {
                     conn.rollback();
-                    ex.printStackTrace();
+                    System.out.println("load mart thất bại!");
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Kết nối thất bại!");
         }
     }
 

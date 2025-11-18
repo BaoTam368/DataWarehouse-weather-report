@@ -1,17 +1,11 @@
-package extract;
-
-import java.io.File;
+package process.extract;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import config.Config;
 import database.*;

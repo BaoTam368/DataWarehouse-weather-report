@@ -1,4 +1,4 @@
-package extract;
+package process.extract;
 
 public class WeatherData {
 	public String time;

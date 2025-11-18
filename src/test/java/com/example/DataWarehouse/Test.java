@@ -5,9 +5,10 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import config.Config;
 import java.io.File;
 
-import extract.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import process.extract.Scraper;
+import process.extract.WeatherData;
 
 public class Test {
 
