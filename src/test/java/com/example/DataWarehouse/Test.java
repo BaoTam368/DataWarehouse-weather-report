@@ -1,16 +1,14 @@
 package com.example.DataWarehouse;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import com.fasterxml.*;
-import com.fasterxml.jackson.core.exc.StreamReadException;
-import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import config.Config;
 import java.io.File;
 
-import extract.*;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import process.extract.Scraper;
+import process.extract.WeatherData;
 
 public class Test {
 
@@ -21,8 +19,13 @@ public class Test {
 		System.out.println("Host: " + config.database.host);
 		System.out.println("Port: " + config.database.port);
 		System.out.println("Src Folder Path: " + config.source.source_folder_path);
+        System.out.println("Src Transaction Path: " + config.transaction.scripts);
+        System.out.println("Src Aggregate Path: " + config.aggregate.scripts);
+        System.out.println("Src Aggregate Path: " + config.mart.scripts);
 
-		WeatherData data = Scraper.fetchWeatherData(config.source.source_url);
+        String url = config.source.source_url;
+        Document doc = Jsoup.connect(url).get();
+        WeatherData data = Scraper.fetchWeatherData(doc);
 		String fileName = Scraper.generateFileName(config.source.source_folder_path);
 		Scraper.writeToCSV(data, fileName);
 		

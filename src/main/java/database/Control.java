@@ -2,6 +2,7 @@ package database;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
@@ -49,7 +50,7 @@ public class Control {
 		}
 	}
 
-	public static void insertConfigSource(Connection conn, String sourceName, String sourceUrl,
+	public static int insertConfigSource(Connection conn, String sourceName, String sourceUrl,
 			String sourceFileLocation, String fileFormat, String scrapingScriptPath, String destinationStaging,
 			String transformProcedure, String loadWarehouseProcedure, String aggregateProcedure, String aggregateTable,
 			String aggregateFilePath) {
@@ -72,10 +73,17 @@ public class Control {
 			ps.setString(10, aggregateTable);
 			ps.setString(11, aggregateFilePath);
 			ps.executeUpdate();
-			System.out.println("✅ Đã ghi config_source vào control.");
+			// Lấy source_id vừa tạo
+			ResultSet rs = ps.getGeneratedKeys();
+			if (rs.next()) {
+				int sourceId = rs.getInt(1);
+				System.out.println("✅ Đã ghi config_source vào control với source_id = " + sourceId);
+				return sourceId;
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		return -1; // Nếu thất bại
 	}
 
 	public static void insertConfigMart(Connection conn, String username, String remoteHost, String password,
