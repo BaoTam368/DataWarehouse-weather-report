@@ -12,21 +12,20 @@ public class Control {
 			int record, double size, String status, Timestamp executeTime) {
 		try {
 			String sql = "INSERT INTO file_log "
-					+ "(source_id, file_path, time, file_format, count, size, status, execute_time) "
-					+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+					+ "(source_id, file_path, time, count, size, status, execute_time) "
+					+ "VALUES (?, ?, ?, ?, ?, ?, ?)";
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setInt(1, srcId); // Nguồn dữ liệu
 			ps.setString(2, srcFileLocation); // Đường dẫn file
 			ps.setTimestamp(3, time);
-			ps.setString(4, format); // format cua file
-			ps.setInt(5, record); // Số bản ghi
-			ps.setDouble(6, size); // Kích thước file
-			ps.setString(7, status); // Trạng thái
-			ps.setTimestamp(8, executeTime); // Thời điểm kết thúc
+			ps.setInt(4, record); // Số bản ghi
+			ps.setDouble(5, size); // Kích thước file
+			ps.setString(6, status); // Trạng thái
+			ps.setTimestamp(7, executeTime); // Thời điểm kết thúc
 			ps.executeUpdate();
 			System.out.println("Đã ghi file_log quá trình vào control.");
 		} catch (SQLException e) {
-			e.printStackTrace();
+            System.out.println("Lỗi khi ghi file_log quá trình vào control.");
 		}
 	}
 
@@ -46,7 +45,7 @@ public class Control {
 			ps.executeUpdate();
 			System.out.println("✅ Đã ghi file_log quá trình vào control.");
 		} catch (SQLException e) {
-			e.printStackTrace();
+            System.out.println("Lỗi khi file_log quá trình vào control");
 		}
 	}
 
@@ -81,7 +80,7 @@ public class Control {
 				return sourceId;
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+            System.out.println("Lỗi khi ghi config_source vào control");
 		}
 		return -1; // Nếu thất bại
 	}
@@ -102,7 +101,7 @@ public class Control {
 			ps.executeUpdate();
 			System.out.println("✅ Đã ghi config_mart vào control.");
 		} catch (SQLException e) {
-			e.printStackTrace();
+            System.out.println("Lỗi khi ghi config_mart vào control");
 		}
 	}
 }
