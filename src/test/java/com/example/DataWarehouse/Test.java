@@ -26,7 +26,7 @@ public class Test {
 				config.database.password, "control");
 
 		int source_id = Control.insertConfigSource(conn, config.source.source_name, config.source.source_url,
-				config.source.source_folder_path, "csv", config.extract.process_code, "?", "?", "?", "?", "?", "?");
+				config.source.source_folder_path, "csv", config.extract.scraping_script_path, "?", "?", "?", "?", "?", "?");
 
 		Main.main(args, conn, config, source_id);
 

@@ -21,23 +21,22 @@ public class Main {
 		Timestamp startTime = Timestamp.valueOf(LocalDateTime.now());
 
 		Document doc = Jsoup.connect(config.source.source_url).get();
-		String Filestatus = "FI";
-		String ProcessStatus = "F";
+		String fileStatus = "FI";
+		String processStatus = "F";
 
 		// kiem tra san sang de extract
 		if (Scraper.checkURL(config.source.source_url) && Scraper.checkPath(config.source.source_folder_path)
 				&& Scraper.checkAllSelectors(doc)) {
-			Filestatus = "FV";
-			ProcessStatus = "ER";
+			fileStatus = "FV";
+			processStatus = "ER";
 		}
 		Timestamp updateAt = Timestamp.valueOf(LocalDateTime.now());
 
 		Control.insertProcessLog(conn, source_id, config.extract.process_code, config.extract.process_name,
-				ProcessStatus, startTime, updateAt);
+				processStatus, startTime, updateAt);
 
-		if (Filestatus == "FI") {
-			Control.insertFileLog(conn, source_id, config.source.source_folder_path, startTime, "csv", 0, 0, Filestatus,
-					updateAt);
+		Control.insertFileLog(conn, source_id, config.source.source_folder_path, startTime, 0, fileStatus, updateAt);
+		if (fileStatus == "FI") {
 			return;
 		}
 
@@ -46,19 +45,19 @@ public class Main {
 		double fileSize = 0;
 
 		try {
-			ProcessStatus = "EO";
+			processStatus = "EO";
 			WeatherData data = Scraper.fetchWeatherData(doc);
 			String fileName = Scraper.generateFileName(config.source.source_folder_path);
-			Scraper.writeToCSV(data, fileName);
-			Filestatus = "FS";
+			fileSize = Scraper.writeToCSV(data, fileName);
+			fileStatus = "FS";
 		} catch (Exception e) {
-			ProcessStatus = "EF";
+			processStatus = "EF";
 			e.printStackTrace();
 		}
 		Timestamp endTime = Timestamp.valueOf(LocalDateTime.now());
 		Control.insertProcessLog(conn, source_id, config.extract.process_code, config.extract.process_name,
-				ProcessStatus, updateAt, endTime);
-		Control.insertFileLog(conn, source_id, config.source.source_folder_path, startTime, "csv", 0, fileSize,
-				Filestatus, endTime);
+				processStatus, updateAt, endTime);
+		Control.insertFileLog(conn, source_id, config.source.source_folder_path, startTime, fileSize, fileStatus,
+				endTime);
 	}
 }
