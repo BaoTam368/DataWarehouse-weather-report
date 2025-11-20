@@ -4,25 +4,24 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 
 public class Control {
 
-	public static void insertFileLog(Connection conn, int srcId, String srcFileLocation, Timestamp time, String format,
-			int record, double size, String status, Timestamp executeTime) {
+	public static void insertFileLog(Connection conn, int srcId, String srcFileLocation, Timestamp time,
+			 double size, String status, Timestamp executeTime) {
 		try {
 			String sql = "INSERT INTO file_log "
-					+ "(source_id, file_path, time, file_format, count, size, status, execute_time) "
-					+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+					+ "(source_id, file_path, time,  size, status, execute_time) "
+					+ "VALUES (?, ?, ?, ?, ?, ? )";
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setInt(1, srcId); // Nguồn dữ liệu
 			ps.setString(2, srcFileLocation); // Đường dẫn file
 			ps.setTimestamp(3, time);
-			ps.setString(4, format); // format cua file
-			ps.setInt(5, record); // Số bản ghi
-			ps.setDouble(6, size); // Kích thước file
-			ps.setString(7, status); // Trạng thái
-			ps.setTimestamp(8, executeTime); // Thời điểm kết thúc
+			ps.setDouble(4, size); // Kích thước file
+			ps.setString(5, status); // Trạng thái
+			ps.setTimestamp(6, executeTime); // Thời điểm kết thúc
 			ps.executeUpdate();
 			System.out.println("Đã ghi file_log quá trình vào control.");
 		} catch (SQLException e) {
@@ -60,7 +59,7 @@ public class Control {
 					+ "destination_staging, transform_procedure, load_warehouse_procedure, "
 					+ "aggregate_procedure, aggregate_table, aggregate_file_path) "
 					+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-			PreparedStatement ps = conn.prepareStatement(sql);
+	        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			ps.setString(1, sourceName);
 			ps.setString(2, sourceUrl);
 			ps.setString(3, sourceFileLocation);
