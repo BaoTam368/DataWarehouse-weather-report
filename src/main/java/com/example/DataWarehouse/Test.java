@@ -4,17 +4,20 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import config.Config;
 import java.io.File;
+import java.util.List;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import process.extract.Scraper;
 import process.extract.WeatherData;
+import process.loadwh.LoadWarehouseProcess;
+
 
 public class Test {
 
 	public static void main(String[] args) throws Exception {
 		XmlMapper xmlMapper = new XmlMapper();
-		Config config = xmlMapper.readValue(new File("config.xml"), Config.class);
+		Config config = xmlMapper.readValue(new File("D:/DW/DataWarehouse/config.xml"), Config.class);
 
 		System.out.println("Host: " + config.database.host);
 		System.out.println("Port: " + config.database.port);
@@ -28,7 +31,10 @@ public class Test {
         WeatherData data = Scraper.fetchWeatherData(doc);
 		String fileName = Scraper.generateFileName(config.source.source_folder_path);
 		Scraper.writeToCSV(data, fileName);
-		
+
+		// LOAD WAREHOUSE
+		LoadWarehouseProcess loadWH = new  LoadWarehouseProcess();
+		loadWH.runLoadWarehouse(List.of("D:\\DW\\scripts\\proc_load_warehouse.sql"));
 	}
 
 }
