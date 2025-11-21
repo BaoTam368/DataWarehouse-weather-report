@@ -17,7 +17,6 @@
 
     <extract>
     <scraping_script_path>\src\main\java\extract\Scraper.java</scraping_script_path>
-	<process_code>scraper</process_code>
 	<process_name>extract</process_name>
 	
     </extract>
