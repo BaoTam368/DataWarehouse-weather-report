@@ -1,103 +1,34 @@
 package process.mart;
 
-import database.Control;
-import database.DataBase;
+import database.DBConnection;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
 import java.io.Reader;
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.List;
 
 public class MartProcess {
+    public void runMart(List<String> martSqlPath) {
+        try (Connection conn = DBConnection.connectDB("localhost", 3306, "root", "1234", "mart_weather")) {
+            // Kết nối DB mart_weather
+            if (conn != null) {
+                conn.setAutoCommit(false);
 
-    public void runMart(int sourceId, List<String> martSqlPath, Connection martConn,
-                        Connection warehouseConn, Connection controlConn) {
-        // Thời điểm bắt đầu run
-        Timestamp validateStart = new Timestamp(System.currentTimeMillis());
-        boolean success = false;
-
-        try (
-                martConn; controlConn
-        ) {
-            // Kiểm tra kết nối database
-            if (martConn == null || controlConn == null) {
-                System.out.println("Kết nối DB mart_weather/control thất bại!");
-                return;
+                try {
+                    for (String path : martSqlPath) {
+                        executeSqlScript(conn, path);
+                    }
+                    conn.commit();
+                    System.out.println("load mart thành công!");
+                } catch (Exception ex) {
+                    conn.rollback();
+                    System.out.println("load mart thất bại!");
+                }
             }
-
-            // 1. VALIDATE SCHEMA -> MR (Mart Ready)
-            boolean ready = isReady(sourceId, martConn, controlConn, warehouseConn, validateStart);
-
-            if (!ready) {
-                System.out.println("Schema không đúng, dừng load mart.");
-                return;
-            }
-
-            // 2. THỰC HIỆN LOAD MART -> LM (Load Mart)
-            // Tắt auto commit để có thể rollback tránh hỏng schema do từng phần trong script chạy lẻ
-            martConn.setAutoCommit(false);
-            Timestamp loadStart = new Timestamp(System.currentTimeMillis());
-
-            success = isSuccess(martSqlPath, martConn, success);
-
-            // Thời điểm kết thúc run
-            Timestamp loadEnd = new Timestamp(System.currentTimeMillis());
-
-            extracted(sourceId, controlConn, success, loadStart, loadEnd);
-
         } catch (Exception e) {
-            System.out.println("Lỗi chung khi chạy MartProcess!");
+            System.out.println("Kết nối thất bại!");
         }
-    }
-
-    private static void extracted(int sourceId, Connection controlConn, boolean success, Timestamp loadStart, Timestamp loadEnd) {
-        Control.insertProcessLog(
-                controlConn,
-                sourceId,
-                "LM",                               // Load Mart
-                "Load dữ liệu vào mart_weather",    // process_name
-                success ? "SC" : "F",
-                loadStart,
-                loadEnd
-        );
-    }
-
-    private boolean isSuccess(List<String> martSqlPath, Connection martConn, boolean success) throws SQLException {
-        try {
-            for (String path : martSqlPath) {
-                executeSqlScript(martConn, path);
-            }
-            martConn.commit();
-            success = true;
-            System.out.println("Load mart thành công!");
-        } catch (Exception ex) {
-            martConn.rollback();
-            System.out.println("Load mart thất bại!");
-            System.out.println("Chi tiết lỗi khi load mart: " + ex.getMessage());
-        }
-        return success;
-    }
-
-    private static boolean isReady(int sourceId, Connection martConn, Connection warehouse, Connection controlConn,
-                                   Timestamp validateStart) {
-        MartValidator validator = new MartValidator();
-        boolean ready = validator.validateAll(martConn, warehouse);
-
-        Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
-
-        Control.insertProcessLog(
-                controlConn,
-                sourceId,
-                "MR",                               // Mart Ready
-                "Validate schema before load mart", // process_name
-                ready ? "SC" : "F",                 // SC = success, F = fail
-                validateStart,
-                validateEnd
-        );
-        return ready;
     }
 
     private void executeSqlScript(Connection conn, String filePath) throws Exception {

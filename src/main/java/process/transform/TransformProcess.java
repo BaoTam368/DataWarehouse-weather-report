@@ -1,120 +1,35 @@
 package process.transform;
 
-import database.Control;
-import database.DataBase;
+import database.DBConnection;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
 import java.io.Reader;
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.List;
 
 public class TransformProcess {
 
-    public void runTransform(int sourceId, List<String> transactionSqlPath,
-                             Connection stagingConn, Connection controlConn) {
-        Timestamp validateStart = new Timestamp(System.currentTimeMillis());
-        boolean success = false;
+    public void runTransform(List<String> transactionSqlPath) {
+        try (Connection conn = DBConnection.connectDB("localhost", 3306, "root", "1234", "staging")) {
+            // Kết nối DB staging
+            if (conn != null) {
+                conn.setAutoCommit(false);
 
-        try (stagingConn; controlConn) {
-            if (stagingConn == null || controlConn == null) {
-                System.out.println("Kết nối DB staging/control thất bại");
-                return;
+                try {
+                    for (String path : transactionSqlPath) {
+                        executeSqlScript(conn, path);
+                    }
+                    conn.commit();
+                    System.out.println("Transform thành công!");
+                } catch (Exception ex) {
+                    conn.rollback();
+                    System.out.println("Transform thất bại");
+                }
             }
-
-            boolean ready = isReady(sourceId, stagingConn, controlConn, validateStart);
-            if (!ready) {
-                System.out.println("Schema không đúng, dừng Transform.");
-                return;
-            }
-
-            stagingConn.setAutoCommit(false);
-            Timestamp transformStart = new Timestamp(System.currentTimeMillis());
-
-            success = isSuccess(transactionSqlPath, stagingConn, success);
-
-            Timestamp transformEnd = new Timestamp(System.currentTimeMillis());
-            extracted(sourceId, controlConn, success, transformStart, transformEnd);
-
         } catch (Exception e) {
-            System.out.println("Lỗi chung khi chạy Transform: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("Kết nối thất bại");
         }
-    }
-
-    /**
-     * Ghi log TO (Transform Ongoing)
-     *
-     * @param sourceId       Nguồn dữ liệu (config_source.source_id)
-     * @param controlConn    Kết nối DB control
-     * @param success        Trạng thái của quá trình transform
-     * @param transformStart Thời điểm bắt đầu quá trình transform
-     * @param transformEnd   Thời điểm kết thúc quá trình transform
-     */
-    private static void extracted(int sourceId, Connection controlConn, boolean success, Timestamp transformStart, Timestamp transformEnd) {
-        Control.insertProcessLog(
-                controlConn,
-                sourceId,
-                "TO",
-                "Run transform scripts",
-                success ? "SC" : "F",                // SC / F
-                transformStart,
-                transformEnd
-        );
-    }
-
-    /**
-     * Kiêm tra xem quá trình transform có thành công hay không
-     *
-     * @param transactionSqlPath danh sách các file .sql cần chạy trong quá trình transform
-     * @param stagingConn        kết nối DB staging
-     * @param success            trạng thái của quá trình transform
-     * @return true nếu transform thành công, false ngược lại
-     * @throws SQLException nếu có lỗi khi thực thi các file .sql
-     */
-    private boolean isSuccess(List<String> transactionSqlPath, Connection stagingConn, boolean success) throws SQLException {
-        try {
-            for (String path : transactionSqlPath) executeSqlScript(stagingConn, path);
-            stagingConn.commit();
-            success = true;
-            System.out.println("Transform thành công!");
-        } catch (Exception ex) {
-            stagingConn.rollback();
-            System.out.println("Transform thất bại");
-            System.out.println("Chi tiết lỗi Transform: " + ex.getMessage());
-            ex.printStackTrace();
-        }
-        return success;
-    }
-
-    /**
-     * Check if transform is ready
-     *
-     * @param sourceId      Nguồn dữ liệu (config_source.source_id)
-     * @param controlConn   Kết nối DB control
-     * @param validateStart Thời điểm bắt đầu validate
-     * @return true nếu transform đã sẵn sàng, false ngược lại
-     */
-    private static boolean isReady(int sourceId,Connection stagingConn, Connection controlConn,
-                                   Timestamp validateStart) {
-        TransformValidator validator = new TransformValidator();
-        boolean ready = validator.validateAll(stagingConn);
-
-        Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
-
-        // Ghi log bước TR (Transform Ready)
-        Control.insertProcessLog(
-                controlConn,
-                sourceId,
-                "TR",
-                "Validate schema before transform",  // process_name
-                ready ? "SC" : "F",                  // SC = OK, F = Fail
-                validateStart,
-                validateEnd
-        );
-        return ready;
     }
 
     /**
