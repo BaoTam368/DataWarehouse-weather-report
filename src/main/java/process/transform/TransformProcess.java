@@ -1,6 +1,6 @@
 package process.transform;
 
-import database.DataBase;
+import database.DBConnection;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
@@ -11,7 +11,7 @@ import java.util.List;
 public class TransformProcess {
 
     public void runTransform(List<String> transactionSqlPath) {
-        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", "staging")) {
+        try (Connection conn = DBConnection.connectDB("localhost", 3306, "root", "1234", "staging")) {
             // Kết nối DB staging
             if (conn != null) {
                 conn.setAutoCommit(false);

@@ -1,6 +1,6 @@
 package process.aggregate;
 
-import database.DataBase;
+import database.DBConnection;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
@@ -12,7 +12,7 @@ public class AggregateProcess {
 
     public void runAggregate(List<String> aggregateSqlPath) {
 
-        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", "warehouse")) {
+        try (Connection conn = DBConnection.connectDB("localhost", 3306, "root", "1234", "warehouse")) {
             // Kết nối DB warehouse
             if (conn != null) {
                 conn.setAutoCommit(false);

@@ -1,6 +1,6 @@
 package process.mart;
 
-import database.DataBase;
+import database.DBConnection;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
@@ -10,7 +10,7 @@ import java.util.List;
 
 public class MartProcess {
     public void runMart(List<String> martSqlPath) {
-        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", "mart_weather")) {
+        try (Connection conn = DBConnection.connectDB("localhost", 3306, "root", "1234", "mart_weather")) {
             // Kết nối DB mart_weather
             if (conn != null) {
                 conn.setAutoCommit(false);
