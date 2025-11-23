@@ -139,7 +139,7 @@ public class Scraper {
 		try (FileWriter fw = new FileWriter(filePath); PrintWriter pw = new PrintWriter(fw)) {
 
 			pw.println(
-					"FullDate,WeekDay,Day,Temperature,UVValue,WindDirection,Humidity,DewPoint,Pressure,Cloud,Visibility,CloudCeiling");
+					"FullDate,WeekDay,Day,Temperature,UVValue,WindDirection,Humidity,DewPoint,Pressure,CloudCover,Visibility,CloudCeiling");
 
 			pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s%n", data.time, data.dayDate, data.temperature, data.uvIndex,
 					data.wind, data.humidity, data.dewPoint, data.pressure, data.cloudCover, data.visibility,
