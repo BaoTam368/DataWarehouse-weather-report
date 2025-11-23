@@ -1,39 +1,35 @@
-USE staging;
+use staging;
 
-TRUNCATE TABLE official;
-
-INSERT INTO official
-(FullDate, Weekday, `Day`,
- Temperature, UVValue, UVLevel, WindDirection, WindSpeed,
- Humidity, DewPoint, Pressure, Cloud,
- Visibility, CloudCeiling)
-SELECT
-    STR_TO_DATE(FullDate, '%Y-%m-%d %H:%i:%s'),
-
+INSERT INTO stg_weather_clean (
+    FullDate,
     Weekday,
-    `Day`,
+    DateValue,
+    Temperature,
+    UVValue,
+    Wind,
+    Humidity,
+    DewPoint,
+    Pressure,
+    CloudCover,
+    Visibility,
+    CloudCeiling
+)
+SELECT
+    -- Convert ngày giờ từ varchar → DATETIME
+    STR_TO_DATE(FullDate, '%Y-%m-%d %H:%i:%s') AS FullDate,
 
-    -- Temperature
-    CAST(REGEXP_SUBSTR(Temperature, '[0-9]+(\\.[0-9]+)?') AS DECIMAL(5,2)),
+    -- Copy toàn bộ dữ liệu thô (được trim)
+    TRIM(Weekday)        AS Weekday,
+    TRIM(Date)            AS DateValue,
+    TRIM(Temperature)     AS Temperature,
+    TRIM(UVValue)         AS UVValue,
+    TRIM(Wind)            AS Wind,
+    TRIM(Humidity)        AS Humidity,
+    TRIM(DewPoint)        AS DewPoint,
+    TRIM(Pressure)        AS Pressure,
+    TRIM(CloudCover)      AS CloudCover,
+    TRIM(Visibility)      AS Visibility,
+    TRIM(CloudCeiling)    AS CloudCeiling
 
-    -- UVValue (số)
-    CAST(REGEXP_SUBSTR(UVValue, '[0-9]+(\\.[0-9]+)?') AS DECIMAL(4,2)),
-
-    -- UVLevel (text sau số)
-    TRIM(
-            REGEXP_REPLACE(UVValue, '^[0-9]+(\\.[0-9]+)?\\s*', '')
-    ),
-
-    -- Wind
-    SUBSTRING_INDEX(WindDirection, ' ', 1),
-    CAST(REGEXP_SUBSTR(WindDirection, '[0-9]+(\\.[0-9]+)?') AS DECIMAL(5,2)),
-
-    -- Other numeric fields
-    CAST(REGEXP_SUBSTR(Humidity, '[0-9]+') AS DECIMAL(5,2)),
-    CAST(REGEXP_SUBSTR(DewPoint, '[0-9]+') AS DECIMAL(5,2)),
-    CAST(REGEXP_SUBSTR(Pressure, '[0-9]+') AS DECIMAL(6,2)),
-    CAST(REGEXP_SUBSTR(Cloud, '[0-9]+') AS DECIMAL(5,2)),
-    CAST(REGEXP_SUBSTR(Visibility, '[0-9]+') AS DECIMAL(5,2)),
-    CAST(REGEXP_SUBSTR(CloudCeiling, '[0-9]+') AS SIGNED)
-FROM temp
+FROM staging.stg_weather
 WHERE STR_TO_DATE(FullDate, '%Y-%m-%d %H:%i:%s') IS NOT NULL;
