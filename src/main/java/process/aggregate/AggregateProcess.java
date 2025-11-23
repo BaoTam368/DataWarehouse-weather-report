@@ -14,46 +14,71 @@ public class AggregateProcess {
 
     public void runAggregate(int sourceId, List<String> aggregateSqlPath) {
 
-        Timestamp startTime = new Timestamp(System.currentTimeMillis());
+        // Thời điểm bắt đầu bước VALIDATE (AR)
+        Timestamp validateStart = new Timestamp(System.currentTimeMillis());
         boolean success = false;
 
         try (
                 Connection warehouseConn = DataBase.connectDB("localhost", 3306, "root", "1234", "warehouse");
                 Connection controlConn = DataBase.connectDB("localhost", 3306, "root", "1234", "control")
         ) {
-            // Kết nối DB warehouse
-            if (warehouseConn != null && controlConn != null) {
-                warehouseConn.setAutoCommit(false);
-
-                try {
-                    for (String path : aggregateSqlPath) {
-                        executeSqlScript(warehouseConn, path);
-                    }
-                    warehouseConn.commit();
-                    success = true;
-                    System.out.println("Aggregate weather daily thành công!");
-                } catch (Exception ex) {
-                    warehouseConn.rollback();
-                    System.out.println("Aggregate weather daily thất bại!");
-                    ex.printStackTrace();
-                }
-
-                // Ghi log vào process_log
-                Timestamp endTime = new Timestamp(System.currentTimeMillis());
-                String status = success ? "SUCCESS" : "FAILED";
-
-                Control.insertProcessLog(
-                        controlConn,
-                        sourceId,
-                        "AGGREGATE",                        // process_code
-                        "Aggregate weather daily",          // process_name
-                        status,
-                        startTime,
-                        endTime
-                );
+            if (warehouseConn == null || controlConn == null) {
+                System.out.println("Kết nối DB warehouse/control thất bại!");
+                return;
             }
+
+            // 1. VALIDATE SCHEMA -> process_code = AR
+            AggregateValidator validator = new AggregateValidator();
+            boolean ready = validator.validateAll();
+
+            Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
+
+            Control.insertProcessLog(
+                    controlConn,
+                    sourceId,
+                    "AR",                               // Aggregate Ready
+                    "Validate schema before aggregate", // process_name
+                    ready ? "SC" : "F",                 // SC = OK, F = fail
+                    validateStart,
+                    validateEnd
+            );
+
+            if (!ready) {
+                System.out.println("Schema warehouse không đúng, dừng Aggregate.");
+                return;
+            }
+
+            // 2. THỰC HIỆN AGGREGATE -> process_code = AG
+            warehouseConn.setAutoCommit(false);
+            Timestamp aggregateStart = new Timestamp(System.currentTimeMillis());
+
+            try {
+                for (String path : aggregateSqlPath) {
+                    executeSqlScript(warehouseConn, path);
+                }
+                warehouseConn.commit();
+                success = true;
+                System.out.println("Aggregate weather daily thành công!");
+            } catch (Exception ex) {
+                warehouseConn.rollback();
+                System.out.println("Aggregate weather daily thất bại!");
+                ex.printStackTrace();
+            }
+
+            Timestamp aggregateEnd = new Timestamp(System.currentTimeMillis());
+
+            Control.insertProcessLog(
+                    controlConn,
+                    sourceId,
+                    "AG",                               // Aggregate running
+                    "Aggregate weather daily",          // process_name
+                    success ? "SC" : "F",               // SC / F
+                    aggregateStart,
+                    aggregateEnd
+            );
+
         } catch (Exception e) {
-            System.out.println("Kết nối thất bại!");
+            System.out.println("Lỗi chung khi chạy Aggregate!");
         }
     }
 

@@ -89,7 +89,7 @@ public class AggregateDumpProcess {
                     outputPath,
                     startTime,
                     (double) sizeBytes,       // size
-                    success ? "AGGREGATE_DUMP" : "AGGREGATE_DUMP_FAILED",
+                    success ? "SC" : "F",
                     endTime
             );
 
@@ -98,7 +98,7 @@ public class AggregateDumpProcess {
                     sourceId,
                     "DUMP_AGGREGATE",
                     "Dump AggregateWeatherDaily to CSV",
-                    success ? "SUCCESS" : "FAILED",
+                    success ? "SC" : "F",
                     startTime,
                     endTime
             );

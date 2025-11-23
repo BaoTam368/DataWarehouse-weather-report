@@ -13,44 +13,73 @@ import java.util.List;
 public class TransformProcess {
 
     public void runTransform(int sourceId, List<String> transactionSqlPath) {
-        Timestamp startTime = new Timestamp(System.currentTimeMillis());
+        // Thời điểm bắt đầu bước VALIDATE
+        Timestamp validateStart = new Timestamp(System.currentTimeMillis());
+
         boolean success = false;
 
         try (
                 Connection stagingConn = DataBase.connectDB("localhost", 3306, "root", "1234", "staging");
                 Connection controlConn = DataBase.connectDB("localhost", 3306, "root", "1234", "control")
         ) {
-            if (stagingConn != null && controlConn != null) {
-                stagingConn.setAutoCommit(false);
-
-                try {
-                    for (String path : transactionSqlPath) {
-                        executeSqlScript(stagingConn, path);
-                    }
-                    stagingConn.commit();
-                    success = true;
-                    System.out.println("Transform thành công!");
-                } catch (Exception ex) {
-                    stagingConn.rollback();
-                    System.out.println("Transform thất bại");
-                }
-
-                // Sau khi chạy xong (thành công hoặc thất bại) -> ghi log
-                Timestamp endTime = new Timestamp(System.currentTimeMillis());
-                String status = success ? "SUCCESS" : "FAILED";
-
-                Control.insertProcessLog(
-                        controlConn,
-                        sourceId,
-                        "TRANSFORM",                  // process_code
-                        "Run transform scripts",      // process_name
-                        status,
-                        startTime,
-                        endTime
-                );
+            if (stagingConn == null || controlConn == null) {
+                System.out.println("Kết nối DB staging/control thất bại");
+                return;
             }
+
+            // 1. VALIDATE SCHEMA -> process_code = TR
+            TransformValidator validator = new TransformValidator();
+            boolean ready = validator.validateAll();
+
+            Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
+
+            // Ghi log bước TR (Transform Ready)
+            Control.insertProcessLog(
+                    controlConn,
+                    sourceId,
+                    "TR",                                // Transform Ready
+                    "Validate schema before transform",  // process_name
+                    ready ? "SC" : "F",                  // SC = OK, F = Fail
+                    validateStart,
+                    validateEnd
+            );
+
+            if (!ready) {
+                System.out.println("Schema không đúng, dừng Transform.");
+                return;
+            }
+
+            // 2. THỰC HIỆN TRANSFORM -> process_code = TO
+            stagingConn.setAutoCommit(false);
+            Timestamp transformStart = new Timestamp(System.currentTimeMillis());
+
+            try {
+                for (String path : transactionSqlPath) {
+                    executeSqlScript(stagingConn, path);
+                }
+                stagingConn.commit();
+                success = true;
+                System.out.println("Transform thành công!");
+            } catch (Exception ex) {
+                stagingConn.rollback();
+                System.out.println("Transform thất bại");
+            }
+
+            Timestamp transformEnd = new Timestamp(System.currentTimeMillis());
+
+            // Ghi log bước TO (Transform Ongoing / thực thi)
+            Control.insertProcessLog(
+                    controlConn,
+                    sourceId,
+                    "TO",                                // Transform Ongoing
+                    "Run transform scripts",
+                    success ? "SC" : "F",                // SC / F
+                    transformStart,
+                    transformEnd
+            );
+
         } catch (Exception e) {
-            System.out.println("Kết nối thất bại");
+            System.out.println("Lỗi chung khi chạy Transform");
         }
     }
 

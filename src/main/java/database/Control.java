@@ -43,7 +43,7 @@ public class Control {
             ps.setString(5, status); // Trạng thái
             ps.setTimestamp(6, endTime); // Thời điểm kết thúc
             ps.executeUpdate();
-            System.out.println("✅ Đã ghi file_log quá trình vào control.");
+            System.out.println("✅ Đã ghi process_log quá trình vào control.");
         } catch (SQLException e) {
             e.printStackTrace();
         }
