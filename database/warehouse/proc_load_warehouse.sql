@@ -96,7 +96,7 @@ SELECT
 FROM (
     SELECT
         d.SK,
-        -- Day phải lấy từ STAGING:
+        -- Day phải lấy từ staging (stg_weather_clean):
         DAY(STR_TO_DATE(s.FullDate,'%Y-%m-%d %H:%i:%s')) AS Day,
         w.WindKey,
         u.UVKey,
