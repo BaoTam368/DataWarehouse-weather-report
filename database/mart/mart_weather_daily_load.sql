@@ -13,4 +13,4 @@ SELECT a.DateOnly,
            WHEN a.AvgTemp <= 25 THEN 'Mild'
            ELSE 'Hot'
            END AS TempCategory
-FROM warehouse.AggregateWeatherDaily a;
+FROM warehouse.aggregate_weather_daily a;

@@ -71,7 +71,6 @@ public class AggregateDumpProcess {
 
         } catch (Exception e) {
             System.out.println("Dump aggregate -> CSV thất bại!");
-            e.printStackTrace();
         }
 
         // 2. Ghi log (dù thành công hay thất bại vẫn cố log)
@@ -82,7 +81,6 @@ public class AggregateDumpProcess {
                 return;
             }
 
-            // ⚠ nhớ sửa insertFileLog cho khớp với cột count trong file_log
             Control.insertFileLog(
                     controlConn,
                     sourceId,
@@ -96,7 +94,7 @@ public class AggregateDumpProcess {
             Control.insertProcessLog(
                     controlConn,
                     sourceId,
-                    "DUMP_AGGREGATE",
+                    "DP", // DUMP AGGREGATE
                     "Dump AggregateWeatherDaily to CSV",
                     success ? "SC" : "F",
                     startTime,
@@ -104,7 +102,6 @@ public class AggregateDumpProcess {
             );
         } catch (Exception e) {
             System.out.println("Ghi log cho dump aggregate thất bại!");
-            e.printStackTrace();
         }
     }
 

@@ -13,46 +13,70 @@ import java.util.List;
 public class MartProcess {
 
     public void runMart(int sourceId, List<String> martSqlPath) {
-        Timestamp startTime = new Timestamp(System.currentTimeMillis());
+        // Bắt đầu bước validate
+        Timestamp validateStart = new Timestamp(System.currentTimeMillis());
         boolean success = false;
 
         try (
                 Connection martConn = DataBase.connectDB("localhost", 3306, "root", "1234", "mart_weather");
                 Connection controlConn = DataBase.connectDB("localhost", 3306, "root", "1234", "control")
         ) {
-            // Kết nối DB mart_weather
-            if (martConn != null && controlConn != null) {
-                martConn.setAutoCommit(false);
-
-                try {
-                    for (String path : martSqlPath) {
-                        executeSqlScript(martConn, path);
-                    }
-                    martConn.commit();
-                    success = true;
-                    System.out.println("load mart thành công!");
-                } catch (Exception ex) {
-                    martConn.rollback();
-                    System.out.println("load mart thất bại!");
-                    ex.printStackTrace();
-                }
-
-                // Ghi log vào process_log sau khi chạy xong
-                Timestamp endTime = new Timestamp(System.currentTimeMillis());
-                String status = success ? "SUCCESS" : "FAILED";
-
-                Control.insertProcessLog(
-                        controlConn,
-                        sourceId,
-                        "LOAD_MART",                      // process_code
-                        "Load dữ liệu vào mart_weather",  // process_name
-                        status,
-                        startTime,
-                        endTime
-                );
+            if (martConn == null || controlConn == null) {
+                System.out.println("Kết nối DB mart_weather/control thất bại!");
+                return;
             }
+
+            // 1. VALIDATE SCHEMA -> MR (Mart Ready)
+            MartValidator validator = new MartValidator();
+            boolean ready = validator.validateAll();
+
+            Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
+
+            Control.insertProcessLog(
+                    controlConn,
+                    sourceId,
+                    "MR",                               // Mart Ready
+                    "Validate schema before load mart", // process_name
+                    ready ? "SC" : "F",                 // SC = success, F = fail
+                    validateStart,
+                    validateEnd
+            );
+
+            if (!ready) {
+                System.out.println("Schema không đúng, dừng load mart.");
+                return;
+            }
+
+            // 2. THỰC HIỆN LOAD MART -> LM (Load Mart)
+            martConn.setAutoCommit(false);
+            Timestamp loadStart = new Timestamp(System.currentTimeMillis());
+
+            try {
+                for (String path : martSqlPath) {
+                    executeSqlScript(martConn, path);
+                }
+                martConn.commit();
+                success = true;
+                System.out.println("Load mart thành công!");
+            } catch (Exception ex) {
+                martConn.rollback();
+                System.out.println("Load mart thất bại!");
+            }
+
+            Timestamp loadEnd = new Timestamp(System.currentTimeMillis());
+
+            Control.insertProcessLog(
+                    controlConn,
+                    sourceId,
+                    "LM",                               // Load Mart
+                    "Load dữ liệu vào mart_weather",    // process_name
+                    success ? "SC" : "F",
+                    loadStart,
+                    loadEnd
+            );
+
         } catch (Exception e) {
-            System.out.println("Kết nối thất bại!");
+            System.out.println("Lỗi chung khi chạy MartProcess!");
         }
     }
 

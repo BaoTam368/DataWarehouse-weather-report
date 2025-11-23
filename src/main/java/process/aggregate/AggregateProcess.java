@@ -62,7 +62,6 @@ public class AggregateProcess {
             } catch (Exception ex) {
                 warehouseConn.rollback();
                 System.out.println("Aggregate weather daily thất bại!");
-                ex.printStackTrace();
             }
 
             Timestamp aggregateEnd = new Timestamp(System.currentTimeMillis());
@@ -70,7 +69,7 @@ public class AggregateProcess {
             Control.insertProcessLog(
                     controlConn,
                     sourceId,
-                    "AG",                               // Aggregate running
+                    "AO",                               // Aggregate ongoing
                     "Aggregate weather daily",          // process_name
                     success ? "SC" : "F",               // SC / F
                     aggregateStart,
