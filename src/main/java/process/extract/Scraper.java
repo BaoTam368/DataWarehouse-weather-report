@@ -189,7 +189,7 @@ public class Scraper {
 
 			// Ghi header của file CSV
 			pw.println(
-					"FullDate,WeekDay,Day,Temperature,UVValue,WindDirection,Humidity,DewPoint,Pressure,Cloud,Visibility,CloudCeiling");
+					"FullDate,WeekDay,Day,Temperature,UVValue,WindDirection,Humidity,DewPoint,Pressure,CloudCover,Visibility,CloudCeiling");
 
 			// Ghi dữ liệu thời tiết theo định dạng CSV
 			pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s%n", data.time, data.dayDate, data.temperature, data.uvIndex,
