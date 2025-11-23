@@ -1,30 +1,55 @@
 package process.mart;
 
+import database.Control;
 import database.DataBase;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
 import java.io.Reader;
 import java.sql.Connection;
+import java.sql.Timestamp;
 import java.util.List;
 
 public class MartProcess {
-    public void runMart(List<String> martSqlPath) {
-        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", "mart_weather")) {
+
+    public void runMart(int sourceId, List<String> martSqlPath) {
+        Timestamp startTime = new Timestamp(System.currentTimeMillis());
+        boolean success = false;
+
+        try (
+                Connection martConn = DataBase.connectDB("localhost", 3306, "root", "1234", "mart_weather");
+                Connection controlConn = DataBase.connectDB("localhost", 3306, "root", "1234", "control")
+        ) {
             // Kết nối DB mart_weather
-            if (conn != null) {
-                conn.setAutoCommit(false);
+            if (martConn != null && controlConn != null) {
+                martConn.setAutoCommit(false);
 
                 try {
                     for (String path : martSqlPath) {
-                        executeSqlScript(conn, path);
+                        executeSqlScript(martConn, path);
                     }
-                    conn.commit();
+                    martConn.commit();
+                    success = true;
                     System.out.println("load mart thành công!");
                 } catch (Exception ex) {
-                    conn.rollback();
+                    martConn.rollback();
                     System.out.println("load mart thất bại!");
+                    ex.printStackTrace();
                 }
+
+                // Ghi log vào process_log sau khi chạy xong
+                Timestamp endTime = new Timestamp(System.currentTimeMillis());
+                String status = success ? "SUCCESS" : "FAILED";
+
+                Control.insertProcessLog(
+                        controlConn,
+                        sourceId,
+                        "LOAD_MART",                      // process_code
+                        "Load dữ liệu vào mart_weather",  // process_name
+                        status,
+                        startTime,
+                        endTime
+                );
             }
         } catch (Exception e) {
             System.out.println("Kết nối thất bại!");

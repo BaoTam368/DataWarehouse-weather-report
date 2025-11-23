@@ -1,31 +1,53 @@
 package process.transform;
 
+import database.Control;
 import database.DataBase;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
 import java.io.Reader;
 import java.sql.Connection;
+import java.sql.Timestamp;
 import java.util.List;
 
 public class TransformProcess {
 
-    public void runTransform(List<String> transactionSqlPath) {
-        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", "staging")) {
-            // Kết nối DB staging
-            if (conn != null) {
-                conn.setAutoCommit(false);
+    public void runTransform(int sourceId, List<String> transactionSqlPath) {
+        Timestamp startTime = new Timestamp(System.currentTimeMillis());
+        boolean success = false;
+
+        try (
+                Connection stagingConn = DataBase.connectDB("localhost", 3306, "root", "1234", "staging");
+                Connection controlConn = DataBase.connectDB("localhost", 3306, "root", "1234", "control")
+        ) {
+            if (stagingConn != null && controlConn != null) {
+                stagingConn.setAutoCommit(false);
 
                 try {
                     for (String path : transactionSqlPath) {
-                        executeSqlScript(conn, path);
+                        executeSqlScript(stagingConn, path);
                     }
-                    conn.commit();
+                    stagingConn.commit();
+                    success = true;
                     System.out.println("Transform thành công!");
                 } catch (Exception ex) {
-                    conn.rollback();
+                    stagingConn.rollback();
                     System.out.println("Transform thất bại");
                 }
+
+                // Sau khi chạy xong (thành công hoặc thất bại) -> ghi log
+                Timestamp endTime = new Timestamp(System.currentTimeMillis());
+                String status = success ? "SUCCESS" : "FAILED";
+
+                Control.insertProcessLog(
+                        controlConn,
+                        sourceId,
+                        "TRANSFORM",                  // process_code
+                        "Run transform scripts",      // process_name
+                        status,
+                        startTime,
+                        endTime
+                );
             }
         } catch (Exception e) {
             System.out.println("Kết nối thất bại");

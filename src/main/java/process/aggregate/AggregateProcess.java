@@ -1,32 +1,56 @@
 package process.aggregate;
 
+import database.Control;
 import database.DataBase;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
 import java.io.Reader;
 import java.sql.Connection;
+import java.sql.Timestamp;
 import java.util.List;
 
 public class AggregateProcess {
 
-    public void runAggregate(List<String> aggregateSqlPath) {
+    public void runAggregate(int sourceId, List<String> aggregateSqlPath) {
 
-        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", "warehouse")) {
+        Timestamp startTime = new Timestamp(System.currentTimeMillis());
+        boolean success = false;
+
+        try (
+                Connection warehouseConn = DataBase.connectDB("localhost", 3306, "root", "1234", "warehouse");
+                Connection controlConn = DataBase.connectDB("localhost", 3306, "root", "1234", "control")
+        ) {
             // Kết nối DB warehouse
-            if (conn != null) {
-                conn.setAutoCommit(false);
+            if (warehouseConn != null && controlConn != null) {
+                warehouseConn.setAutoCommit(false);
 
                 try {
                     for (String path : aggregateSqlPath) {
-                        executeSqlScript(conn, path);
+                        executeSqlScript(warehouseConn, path);
                     }
-                    conn.commit();
+                    warehouseConn.commit();
+                    success = true;
                     System.out.println("Aggregate weather daily thành công!");
                 } catch (Exception ex) {
-                    conn.rollback();
+                    warehouseConn.rollback();
                     System.out.println("Aggregate weather daily thất bại!");
+                    ex.printStackTrace();
                 }
+
+                // Ghi log vào process_log
+                Timestamp endTime = new Timestamp(System.currentTimeMillis());
+                String status = success ? "SUCCESS" : "FAILED";
+
+                Control.insertProcessLog(
+                        controlConn,
+                        sourceId,
+                        "AGGREGATE",                        // process_code
+                        "Aggregate weather daily",          // process_name
+                        status,
+                        startTime,
+                        endTime
+                );
             }
         } catch (Exception e) {
             System.out.println("Kết nối thất bại!");

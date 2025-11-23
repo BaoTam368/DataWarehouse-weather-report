@@ -11,10 +11,12 @@ public class Main {
     public static void main(String[] args) throws IOException {
         XmlMapper xmlMapper = new XmlMapper();
         Config config = xmlMapper.readValue(new File("config.xml"), Config.class);
-        List<String> paths = config.transaction.scripts;
 
         // Gọi process transform để chạy danh sách script transform
+        int sourceId = config.source.source_id;
+        List<String> paths = config.transaction.scripts;
+
         TransformProcess process = new TransformProcess();
-        process.runTransform(paths);
+        process.runTransform(sourceId, paths);
     }
 }
