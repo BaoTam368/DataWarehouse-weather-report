@@ -11,7 +11,7 @@ import java.util.List;
 public class TransformProcess {
 
     public void runTransform(List<String> transactionSqlPath) {
-        try (Connection conn = DBConnection.connectDB("localhost", 3306, "root", "1234", "staging")) {
+        try (Connection conn = DBConnection.connectDB("localhost", 3306, "root", "123456", "staging")) {
             // Kết nối DB staging
             if (conn != null) {
                 conn.setAutoCommit(false);
