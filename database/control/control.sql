@@ -25,8 +25,7 @@ CREATE TABLE config_mart
     mart_id               INT AUTO_INCREMENT PRIMARY KEY,
     username              VARCHAR(100),
     remote_host           VARCHAR(100),
-    password              VARCHAR(200),
-    file_format           VARCHAR(200),
+    passwword             VARCHAR(200),
     aggregate_file_path   VARCHAR(500),
     load_mart_script_path VARCHAR(500)
 );
@@ -37,7 +36,6 @@ CREATE TABLE file_log
     source_id    INT,
     file_path    VARCHAR(1000),
     time         datetime,
-    count        INT,
     size         double,
     status       VARCHAR(20),
     execute_time datetime,
