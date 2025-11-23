@@ -89,15 +89,14 @@ public class Control {
 			String fileFormat, String aggregateFilePath, String loadMartScriptPath) {
 		try {
 			String sql = "INSERT INTO config_mart "
-					+ "(username, remote_host, passwword, file_format, aggregate_file_path, load_mart_script_path) "
-					+ "VALUES (?, ?, ?, ?, ?, ?)";
+					+ "(username, remote_host, password, aggregate_file_path, load_mart_script_path) "
+					+ "VALUES (?, ?, ?, ?,  ?)";
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setString(1, username);
 			ps.setString(2, remoteHost);
 			ps.setString(3, password);
-			ps.setString(4, fileFormat);
-			ps.setString(5, aggregateFilePath);
-			ps.setString(6, loadMartScriptPath);
+			ps.setString(4, aggregateFilePath);
+			ps.setString(5, loadMartScriptPath);
 			ps.executeUpdate();
 			System.out.println("✅ Đã ghi config_mart vào control.");
 		} catch (SQLException e) {

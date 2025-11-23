@@ -1,22 +1,13 @@
-package extract;
+package process.extract;
 
-import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import config.Config;
 import database.*;
-import email.EmailUtils;
-import extract.*;
 
 public class MainExtract {
 	// Phương thức kiểm tra xem dữ liệu có sẵn sàng để thực hiện bước Extract hay không
