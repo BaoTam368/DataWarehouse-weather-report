@@ -11,4 +11,6 @@ public class Config {
     public Transaction transaction;
     public Aggregate aggregate;
     public Mart mart;
+    public String email;
+    public Warehouse warehouse;
 }
