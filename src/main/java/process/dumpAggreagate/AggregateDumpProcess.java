@@ -4,6 +4,7 @@ import database.Control;
 import database.DataBase;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,7 +21,7 @@ public class AggregateDumpProcess {
      * @param outputPath đường dẫn file CSV muốn xuất (ví dụ: "D:/DW/aggregate/aggregate_daily.csv")
      */
     public void dumpAggregateToCsv(int sourceId, String outputPath) {
-
+        // Thời gian bắt đầu
         Timestamp startTime = Timestamp.valueOf(LocalDateTime.now());
         boolean success = false;
         long sizeBytes = 0;
@@ -38,32 +39,18 @@ public class AggregateDumpProcess {
                 );
                 BufferedWriter writer = Files.newBufferedWriter(out, StandardCharsets.UTF_8)
         ) {
+            // Ghi header
             writer.write("DateOnly,AvgTemp,MinTemp,MaxTemp,AvgHumidity,AvgPressure,RowCount");
             writer.newLine();
 
+            // Ghi dữ liệu
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                Date date = rs.getDate("DateOnly");
-                double avgTemp = rs.getDouble("AvgTemp");
-                double minTemp = rs.getDouble("MinTemp");
-                double maxTemp = rs.getDouble("MaxTemp");
-                double avgHumidity = rs.getDouble("AvgHumidity");
-                double avgPressure = rs.getDouble("AvgPressure");
-                int rc = rs.getInt("RowCount");
-
-                String line = String.format("%s,%.2f,%.2f,%.2f,%.2f,%.2f,%d",
-                        date.toString(),
-                        avgTemp,
-                        minTemp,
-                        maxTemp,
-                        avgHumidity,
-                        avgPressure,
-                        rc
-                );
-                writer.write(line);
-                writer.newLine();
+                // Ghi từng dòng
+                writeLine(rs, writer);
             }
 
+            // Ghi file và tính kích thước , flush để đảm bảo ghi xong
             writer.flush();
             sizeBytes = Files.size(out);
             success = true;
@@ -73,8 +60,21 @@ public class AggregateDumpProcess {
             System.out.println("Dump aggregate -> CSV thất bại!");
         }
 
-        // 2. Ghi log (dù thành công hay thất bại vẫn cố log)
+        // 2. Ghi log
         Timestamp endTime = Timestamp.valueOf(LocalDateTime.now());
+        writeLog(sourceId, outputPath, startTime, (double) sizeBytes, success, endTime);
+    }
+
+    /**
+     * Write log for dump aggregate process
+     * @param sourceId     Nguồn dữ liệu (config_source.source_id)
+     * @param outputPath  Đường dẫn file đã được dump
+     * @param startTime    Thời điểm bắt đầu dump
+     * @param sizeBytes   Kích thước file đã được dump (byte)
+     * @param success     Trạng thái của quá trình dump
+     * @param endTime      Thời điểm kết thúc dump
+     */
+    private static void writeLog(int sourceId, String outputPath, Timestamp startTime, double sizeBytes, boolean success, Timestamp endTime) {
         try (Connection controlConn = DataBase.connectDB("localhost", 3306, "root", "1234", "control")) {
             if (controlConn == null) {
                 System.out.println("Không thể ghi log vì kết nối DB control thất bại");
@@ -86,7 +86,7 @@ public class AggregateDumpProcess {
                     sourceId,
                     outputPath,
                     startTime,
-                    (double) sizeBytes,       // size
+                    sizeBytes,       // size
                     success ? "SC" : "F",
                     endTime
             );
@@ -103,6 +103,37 @@ public class AggregateDumpProcess {
         } catch (Exception e) {
             System.out.println("Ghi log cho dump aggregate thất bại!");
         }
+    }
+
+    /**
+     * Writes a line of the aggregated weather data to the given writer.
+     * The line format is:
+     * DateOnly,AvgTemp,MinTemp,MaxTemp,AvgHumidity,AvgPressure,RowCount
+     * @param rs the result set containing the aggregated weather data
+     * @param writer the writer to write the line to
+     * @throws SQLException if the result set does not contain the expected columns
+     * @throws IOException if the writer throws an IOException
+     */
+    private static void writeLine(ResultSet rs, BufferedWriter writer) throws SQLException, IOException {
+        Date date = rs.getDate("DateOnly");
+        double avgTemp = rs.getDouble("AvgTemp");
+        double minTemp = rs.getDouble("MinTemp");
+        double maxTemp = rs.getDouble("MaxTemp");
+        double avgHumidity = rs.getDouble("AvgHumidity");
+        double avgPressure = rs.getDouble("AvgPressure");
+        int rc = rs.getInt("RowCount");
+
+        String line = String.format("%s,%.2f,%.2f,%.2f,%.2f,%.2f,%d",
+                date.toString(),
+                avgTemp,
+                minTemp,
+                maxTemp,
+                avgHumidity,
+                avgPressure,
+                rc
+        );
+        writer.write(line);
+        writer.newLine();
     }
 
 }
