@@ -1,6 +1,5 @@
 package process.transform;
 
-import database.DataBase;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,7 +38,7 @@ public class TransformValidator {
     private boolean validateTempTable(Connection conn) throws Exception {
         List<String> requiredCols = Arrays.asList(
                 "FullDate", "Weekday", "Day",
-                "Temperature", "UVValue", "Wind",
+                "Temperature", "UVValue", "WindDirection",
                 "Humidity", "DewPoint", "Pressure",
                 "Cloud", "Visibility", "CloudCeiling"
         );
