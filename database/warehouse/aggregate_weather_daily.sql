@@ -1,6 +1,6 @@
-USE warehouse;
+USE datawarehouse;
 
--- Tạo bảng AggregateWeatherDaily: Để
+-- Tạo bảng aggregate_weather_daily nếu chưa tồn tại
 CREATE TABLE IF NOT EXISTS aggregate_weather_daily
 (
     DateOnly    DATE PRIMARY KEY,
@@ -12,15 +12,18 @@ CREATE TABLE IF NOT EXISTS aggregate_weather_daily
     RowCount    INT
 );
 
+-- Tính toán aggregate theo ngày từ FactWeather + date_dim
 REPLACE INTO aggregate_weather_daily
-SELECT dt.DateOnly,
-       ROUND(AVG(f.Temperature), 2) AS AvgTemp,
-       ROUND(MIN(f.Temperature), 2) AS MinTemp,
-       ROUND(MAX(f.Temperature), 2) AS MaxTemp,
-       ROUND(AVG(f.Humidity), 2)    AS AvgHumidity,
-       ROUND(AVG(f.Pressure), 2)    AS AvgPressure,
-       COUNT(*)                     AS RowCount
-FROM warehouse.FactWeather f
-         JOIN warehouse.DimTime dt ON dt.TimeKey = f.TimeKey
-GROUP BY dt.DateOnly
-ORDER BY dt.DateOnly;
+SELECT
+    d.DateOnly,
+    ROUND(AVG(f.Temperature), 2) AS AvgTemp,
+    ROUND(MIN(f.Temperature), 2) AS MinTemp,
+    ROUND(MAX(f.Temperature), 2) AS MaxTemp,
+    ROUND(AVG(f.Humidity), 2)    AS AvgHumidity,
+    ROUND(AVG(f.Pressure), 2)    AS AvgPressure,
+    COUNT(*)                     AS RowCount
+FROM datawarehouse.FactWeather f
+         JOIN datawarehouse.date_dim d
+              ON d.SK = f.SK
+GROUP BY d.DateOnly
+ORDER BY d.DateOnly;

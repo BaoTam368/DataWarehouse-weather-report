@@ -1,7 +1,6 @@
 package process.transform;
 
 import database.Control;
-import database.DataBase;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
@@ -15,120 +14,105 @@ public class TransformProcess {
 
     public void runTransform(int sourceId, List<String> transactionSqlPath,
                              Connection stagingConn, Connection controlConn) {
+
         Timestamp validateStart = new Timestamp(System.currentTimeMillis());
         boolean success = false;
 
-        try (stagingConn; controlConn) {
+        try {
             if (stagingConn == null || controlConn == null) {
                 System.out.println("Kết nối DB staging/control thất bại");
                 return;
             }
 
+            // 1. VALIDATE -> TR
             boolean ready = isReady(sourceId, stagingConn, controlConn, validateStart);
             if (!ready) {
                 System.out.println("Schema không đúng, dừng Transform.");
                 return;
             }
 
+            // 2. RUN TRANSFORM -> TO
             stagingConn.setAutoCommit(false);
             Timestamp transformStart = new Timestamp(System.currentTimeMillis());
 
-            success = isSuccess(transactionSqlPath, stagingConn, success);
+            success = isSuccess(transactionSqlPath, stagingConn);
 
             Timestamp transformEnd = new Timestamp(System.currentTimeMillis());
-            extracted(sourceId, controlConn, success, transformStart, transformEnd);
+            writeTransformLog(sourceId, controlConn, success, transformStart, transformEnd);
 
         } catch (Exception e) {
             System.out.println("Lỗi chung khi chạy Transform: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            closeQuietly(stagingConn);
+            closeQuietly(controlConn);
         }
     }
 
-    /**
-     * Ghi log TO (Transform Ongoing)
-     *
-     * @param sourceId       Nguồn dữ liệu (config_source.source_id)
-     * @param controlConn    Kết nối DB control
-     * @param success        Trạng thái của quá trình transform
-     * @param transformStart Thời điểm bắt đầu quá trình transform
-     * @param transformEnd   Thời điểm kết thúc quá trình transform
-     */
-    private static void extracted(int sourceId, Connection controlConn, boolean success, Timestamp transformStart, Timestamp transformEnd) {
+    private static void writeTransformLog(int sourceId, Connection controlConn,
+                                          boolean success, Timestamp start, Timestamp end) {
         Control.insertProcessLog(
                 controlConn,
                 sourceId,
                 "TO",
                 "Run transform scripts",
-                success ? "SC" : "F",                // SC / F
-                transformStart,
-                transformEnd
+                success ? "SC" : "F",
+                start,
+                end
         );
     }
 
-    /**
-     * Kiêm tra xem quá trình transform có thành công hay không
-     *
-     * @param transactionSqlPath danh sách các file .sql cần chạy trong quá trình transform
-     * @param stagingConn        kết nối DB staging
-     * @param success            trạng thái của quá trình transform
-     * @return true nếu transform thành công, false ngược lại
-     * @throws SQLException nếu có lỗi khi thực thi các file .sql
-     */
-    private boolean isSuccess(List<String> transactionSqlPath, Connection stagingConn, boolean success) throws SQLException {
+    private boolean isSuccess(List<String> transactionSqlPath, Connection stagingConn) throws SQLException {
         try {
-            for (String path : transactionSqlPath) executeSqlScript(stagingConn, path);
+            for (String path : transactionSqlPath) {
+                executeSqlScript(stagingConn, path);
+            }
             stagingConn.commit();
-            success = true;
             System.out.println("Transform thành công!");
+            return true;
         } catch (Exception ex) {
             stagingConn.rollback();
-            System.out.println("Transform thất bại");
-            System.out.println("Chi tiết lỗi Transform: " + ex.getMessage());
+            System.out.println("Transform thất bại! Chi tiết: " + ex.getMessage());
             ex.printStackTrace();
+            return false;
         }
-        return success;
     }
 
-    /**
-     * Check if transform is ready
-     *
-     * @param sourceId      Nguồn dữ liệu (config_source.source_id)
-     * @param controlConn   Kết nối DB control
-     * @param validateStart Thời điểm bắt đầu validate
-     * @return true nếu transform đã sẵn sàng, false ngược lại
-     */
-    private static boolean isReady(int sourceId,Connection stagingConn, Connection controlConn,
+    private static boolean isReady(int sourceId, Connection stagingConn, Connection controlConn,
                                    Timestamp validateStart) {
+
         TransformValidator validator = new TransformValidator();
         boolean ready = validator.validateAll(stagingConn);
 
         Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
 
-        // Ghi log bước TR (Transform Ready)
         Control.insertProcessLog(
                 controlConn,
                 sourceId,
                 "TR",
-                "Validate schema before transform",  // process_name
-                ready ? "SC" : "F",                  // SC = OK, F = Fail
+                "Validate schema before transform",
+                ready ? "SC" : "F",
                 validateStart,
                 validateEnd
         );
+
         return ready;
     }
 
-    /**
-     * Dùng MyBatis ScriptRunner để chạy script .sql
-     */
     private void executeSqlScript(Connection conn, String filePath) throws Exception {
         ScriptRunner runner = new ScriptRunner(conn);
-
         runner.setSendFullScript(false);
-        runner.setLogWriter(null);          // tắt log chi tiết ra console
+        runner.setLogWriter(null);
         runner.setErrorLogWriter(null);
 
         try (Reader reader = new FileReader(filePath)) {
             runner.runScript(reader);
         }
+    }
+
+    private void closeQuietly(Connection conn) {
+        try {
+            if (conn != null) conn.close();
+        } catch (Exception ignored) {}
     }
 }

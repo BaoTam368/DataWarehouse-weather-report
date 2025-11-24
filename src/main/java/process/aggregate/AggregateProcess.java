@@ -12,15 +12,26 @@ import java.util.List;
 
 public class AggregateProcess {
 
-    public void runAggregate(int sourceId, List<String> aggregateSqlPath, Connection warehouseConn, Connection controlConn) {
+    /**
+     * Chạy quy trình Aggregate:
+     * 1. Validate schema (AR)
+     * 2. Nếu OK -> chạy danh sách script aggregate (AO)
+     *
+     * @param sourceId         config_source.source_id
+     * @param aggregateSqlPath danh sách đường dẫn file .sql cần chạy
+     * @param warehouseConn    kết nối DB warehouse (đã connect sẵn)
+     * @param controlConn      kết nối DB control (đã connect sẵn)
+     */
+    public void runAggregate(int sourceId,
+                             List<String> aggregateSqlPath,
+                             Connection warehouseConn,
+                             Connection controlConn) {
 
-        // Thời điểm bắt đầu run
+        // Thời điểm bắt đầu bước validate
         Timestamp validateStart = new Timestamp(System.currentTimeMillis());
-        boolean success = false;
+        boolean success;
 
-        try (
-                warehouseConn; controlConn
-        ) {
+        try (warehouseConn; controlConn) {
             // Kiểm tra kết nối database
             if (warehouseConn == null || controlConn == null) {
                 System.out.println("Kết nối DB warehouse/control thất bại!");
@@ -28,43 +39,58 @@ public class AggregateProcess {
             }
 
             // 1. VALIDATE SCHEMA -> process_code = AR
-            boolean ready = isReady(sourceId, warehouseConn, controlConn, validateStart);
+            AggregateValidator validator = new AggregateValidator();
+            boolean ready = validator.validateAll(warehouseConn);
+
+            Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
+
+            // Ghi log AR (Aggregate Ready)
+            Control.insertProcessLog(
+                    controlConn,
+                    sourceId,
+                    "AR",                               // Aggregate Ready
+                    "Validate schema before aggregate", // process_name
+                    ready ? "SC" : "F",                 // SC = OK, F = fail
+                    validateStart,
+                    validateEnd
+            );
 
             if (!ready) {
                 System.out.println("Schema warehouse không đúng, dừng Aggregate.");
                 return;
             }
 
-            // 2. THỰC HIỆN AGGREGATE -> process_code = AG
-            // Tắt auto commit để có thể rollback tránh hỏng schema do từng phần trong script chạy lẻ
+            // 2. THỰC HIỆN AGGREGATE -> process_code = AO
             warehouseConn.setAutoCommit(false);
             Timestamp aggregateStart = new Timestamp(System.currentTimeMillis());
 
-            success = isSuccess(aggregateSqlPath, warehouseConn, success);
+            success = executeAggregateScripts(aggregateSqlPath, warehouseConn);
 
-            // Thời điểm kết thúc run
             Timestamp aggregateEnd = new Timestamp(System.currentTimeMillis());
 
-            extracted(sourceId, controlConn, success, aggregateStart, aggregateEnd);
+            // Ghi log AO (Aggregate Ongoing / Done)
+            Control.insertProcessLog(
+                    controlConn,
+                    sourceId,
+                    "AO",                               // Aggregate Ongoing
+                    "Aggregate weather daily",          // process_name
+                    success ? "SC" : "F",               // SC / F
+                    aggregateStart,
+                    aggregateEnd
+            );
 
         } catch (Exception e) {
-            System.out.println("Lỗi chung khi chạy Aggregate!");
+            System.out.println("Lỗi chung khi chạy Aggregate: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    private static void extracted(int sourceId, Connection controlConn, boolean success, Timestamp aggregateStart, Timestamp aggregateEnd) {
-        Control.insertProcessLog(
-                controlConn,
-                sourceId,
-                "AO",                               // Aggregate ongoing
-                "Aggregate weather daily",          // process_name
-                success ? "SC" : "F",               // SC / F
-                aggregateStart,
-                aggregateEnd
-        );
-    }
-
-    private boolean isSuccess(List<String> aggregateSqlPath, Connection warehouseConn, boolean success) throws SQLException {
+    /**
+     * Thực hiện danh sách script .sql để aggregate
+     */
+    private boolean executeAggregateScripts(List<String> aggregateSqlPath,
+                                            Connection warehouseConn) throws SQLException {
+        boolean success = false;
         try {
             for (String path : aggregateSqlPath) {
                 executeSqlScript(warehouseConn, path);
@@ -81,25 +107,9 @@ public class AggregateProcess {
         return success;
     }
 
-    private static boolean isReady(int sourceId, Connection warehouseConn, Connection controlConn,
-                                   Timestamp validateStart) {
-        AggregateValidator validator = new AggregateValidator();
-        boolean ready = validator.validateAll(warehouseConn);
-
-        Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
-
-        Control.insertProcessLog(
-                controlConn,
-                sourceId,
-                "AR",                               // Aggregate Ready
-                "Validate schema before aggregate", // process_name
-                ready ? "SC" : "F",                 // SC = OK, F = fail
-                validateStart,
-                validateEnd
-        );
-        return ready;
-    }
-
+    /**
+     * Dùng MyBatis ScriptRunner để chạy 1 file .sql
+     */
     private void executeSqlScript(Connection conn, String filePath) throws Exception {
         ScriptRunner runner = new ScriptRunner(conn);
         runner.setSendFullScript(false);

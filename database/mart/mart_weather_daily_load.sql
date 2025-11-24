@@ -1,6 +1,18 @@
-use mart_weather;
+USE mart_weather;
 
-REPLACE INTO mart_weather.WeatherDailySummary
+-- (tuỳ chọn) Tạo bảng nếu chưa có
+CREATE TABLE IF NOT EXISTS WeatherDailySummary
+(
+    DateOnly     DATE PRIMARY KEY,
+    AvgTemp      DECIMAL(5, 2),
+    MinTemp      DECIMAL(5, 2),
+    MaxTemp      DECIMAL(5, 2),
+    AvgHumidity  DECIMAL(5, 2),
+    AvgPressure  DECIMAL(6, 2),
+    TempCategory VARCHAR(20)
+);
+
+REPLACE INTO WeatherDailySummary
 SELECT a.DateOnly,
        a.AvgTemp,
        a.MinTemp,
@@ -13,4 +25,4 @@ SELECT a.DateOnly,
            WHEN a.AvgTemp <= 25 THEN 'Mild'
            ELSE 'Hot'
            END AS TempCategory
-FROM warehouse.aggregate_weather_daily a;
+FROM datawarehouse.aggregate_weather_daily a;

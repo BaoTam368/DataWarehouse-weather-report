@@ -19,7 +19,7 @@ FROM (
         MONTH(STR_TO_DATE(s.FullDate,'%Y-%m-%d %H:%i:%s')) AS Month,
         YEAR(STR_TO_DATE(s.FullDate,'%Y-%m-%d %H:%i:%s')) AS Year,
         DAYNAME(STR_TO_DATE(s.FullDate,'%Y-%m-%d %H:%i:%s')) AS Weekday
-    FROM staging.stg_weather_clean s
+    FROM staging.official s
 ) AS newrow
 ON DUPLICATE KEY UPDATE
     Weekday = newrow.Weekday;
@@ -54,7 +54,7 @@ WHERE NOT EXISTS (
     SELECT DISTINCT
         s.WindDirection AS Direction,
         s.WindSpeed + 0 AS Speed
-    FROM staging.stg_weather_clean s
+    FROM staging.official s
     ) AS newrow
     ON DUPLICATE KEY UPDATE
     Speed = newrow.Speed;
@@ -68,7 +68,7 @@ WHERE NOT EXISTS (
     SELECT DISTINCT
         SUBSTRING_INDEX(TRIM(s.UVValue), ' ', 1) + 0 AS UVValue,
         TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(s.UVValue,'(', -1), ')', 1)) AS UVLevel
-    FROM staging.stg_weather_clean s
+    FROM staging.official s
     ) AS newrow
     ON DUPLICATE KEY UPDATE
     UVLevel = newrow.UVLevel;
@@ -104,10 +104,10 @@ FROM (
         CAST(REGEXP_REPLACE(s.Humidity, '[^0-9.-]', '') AS DECIMAL(4,1)) AS Humidity,
         CAST(REGEXP_REPLACE(s.DewPoint, '[^0-9.-]', '') AS DECIMAL(4,1)) AS DewPoint,
         CAST(REGEXP_REPLACE(s.Pressure, '[^0-9.-]', '') AS DECIMAL(6,2)) AS Pressure,
-        CAST(REGEXP_REPLACE(s.CloudCover, '[^0-9.-]', '') AS DECIMAL(5,2)) AS CloudCover,
+        CAST(REGEXP_REPLACE(s.Cloud, '[^0-9.-]', '') AS DECIMAL(5,2)) AS CloudCover,
         CAST(REGEXP_REPLACE(s.Visibility, '[^0-9.-]', '') AS DECIMAL(5,2)) AS Visibility,
         CAST(REGEXP_REPLACE(s.CloudCeiling, '[^0-9.-]', '') AS SIGNED) AS CloudCeiling
-    FROM staging.stg_weather_clean s
+    FROM staging.official s
     JOIN datawarehouse.date_dim d
         ON d.DateOnly = DATE(STR_TO_DATE(s.FullDate,'%Y-%m-%d %H:%i:%s'))
     JOIN datawarehouse.DimWind w
@@ -133,7 +133,6 @@ ON DUPLICATE KEY UPDATE
     -- =====================================
     -- 6 CLEAN STAGING
     -- =====================================
-    TRUNCATE TABLE staging.stg_weather;
-    TRUNCATE TABLE staging.stg_weather_clean;
+    TRUNCATE TABLE staging.temp;
+    TRUNCATE TABLE staging.official;
 end;
-

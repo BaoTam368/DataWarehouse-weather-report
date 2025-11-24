@@ -20,7 +20,7 @@ public class LoadWarehouseProcess {
         int id = -1;
 
         try (Connection conn = DBConnection.connectDB(
-                "localhost", 3306, "root", "123456", "control")) {
+                "localhost", 3306, "root", "1234", "control")) {
 
             if (conn == null) {
                 System.out.println("❌ Không kết nối được DB control");
@@ -58,7 +58,7 @@ public class LoadWarehouseProcess {
 
         // 1.Kết nối tới DB control
         try (Connection controlConn = DBConnection.connectDB(
-                "localhost", 3306, "root", "123456", "control")) {
+                "localhost", 3306, "root", "1234", "control")) {
 
             if (controlConn == null) {
                 System.out.println("❌ KHÔNG kết nối được tới DB control!");
@@ -78,7 +78,7 @@ public class LoadWarehouseProcess {
 
             // 2. Ket noi DB warehouse
             try (Connection WarehouseConn = DBConnection.connectDB(
-                    "localhost", 3306, "root", "123456", "datawarehouse")) {
+                    "localhost", 3306, "root", "1234", "datawarehouse")) {
 
                 if (WarehouseConn == null) {
                 System.out.println("❌ Không thể kết nối DB datawarehouse!");
