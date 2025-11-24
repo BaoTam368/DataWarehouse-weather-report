@@ -1,7 +1,6 @@
 package process.aggregate;
 
 import database.Control;
-import database.DataBase;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
@@ -13,15 +12,14 @@ import java.util.List;
 
 public class AggregateProcess {
 
-    public void runAggregate(int sourceId, List<String> aggregateSqlPath) {
+    public void runAggregate(int sourceId, List<String> aggregateSqlPath, Connection warehouseConn, Connection controlConn) {
 
         // Thời điểm bắt đầu run
         Timestamp validateStart = new Timestamp(System.currentTimeMillis());
         boolean success = false;
 
         try (
-                Connection warehouseConn = DataBase.connectDB("localhost", 3306, "root", "1234", "warehouse");
-                Connection controlConn = DataBase.connectDB("localhost", 3306, "root", "1234", "control")
+                warehouseConn; controlConn
         ) {
             // Kiểm tra kết nối database
             if (warehouseConn == null || controlConn == null) {

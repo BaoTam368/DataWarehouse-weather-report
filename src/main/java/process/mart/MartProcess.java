@@ -13,14 +13,13 @@ import java.util.List;
 
 public class MartProcess {
 
-    public void runMart(int sourceId, List<String> martSqlPath) {
+    public void runMart(int sourceId, List<String> martSqlPath, Connection martConn, Connection controlConn) {
         // Thời điểm bắt đầu run
         Timestamp validateStart = new Timestamp(System.currentTimeMillis());
         boolean success = false;
 
         try (
-                Connection martConn = DataBase.connectDB("localhost", 3306, "root", "1234", "mart_weather");
-                Connection controlConn = DataBase.connectDB("localhost", 3306, "root", "1234", "control")
+                martConn; controlConn
         ) {
             // Kiểm tra kết nối database
             if (martConn == null || controlConn == null) {

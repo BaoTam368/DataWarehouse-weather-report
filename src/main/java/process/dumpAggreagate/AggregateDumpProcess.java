@@ -20,7 +20,7 @@ public class AggregateDumpProcess {
      * @param sourceId   nguồn dữ liệu (config_source.source_id)
      * @param outputPath đường dẫn file CSV muốn xuất (ví dụ: "D:/DW/aggregate/aggregate_daily.csv")
      */
-    public void dumpAggregateToCsv(int sourceId, String outputPath) {
+    public void dumpAggregateToCsv(int sourceId, String outputPath, Connection warehouseConn, Connection controlConn) {
         // Thời gian bắt đầu
         Timestamp startTime = Timestamp.valueOf(LocalDateTime.now());
         boolean success = false;
@@ -30,7 +30,7 @@ public class AggregateDumpProcess {
 
         // 1. Đọc từ warehouse và ghi file
         try (
-                Connection warehouseConn = DataBase.connectDB("localhost", 3306, "root", "1234", "warehouse");
+                warehouseConn;
                 PreparedStatement ps = Objects.requireNonNull(warehouseConn).prepareStatement(
                         "SELECT DateOnly, AvgTemp, MinTemp, MaxTemp, " +
                                 "AvgHumidity, AvgPressure, RowCount " +
@@ -63,7 +63,7 @@ public class AggregateDumpProcess {
 
         // 2. Ghi log
         Timestamp endTime = Timestamp.valueOf(LocalDateTime.now());
-        writeLog(sourceId, outputPath, startTime, (double) sizeBytes, success, endTime);
+        writeLog(controlConn, sourceId, outputPath, startTime, (double) sizeBytes, success, endTime);
     }
 
     /**
@@ -76,8 +76,10 @@ public class AggregateDumpProcess {
      * @param success    Trạng thái của quá trình dump
      * @param endTime    Thời điểm kết thúc dump
      */
-    private static void writeLog(int sourceId, String outputPath, Timestamp startTime, double sizeBytes, boolean success, Timestamp endTime) {
-        try (Connection controlConn = DataBase.connectDB("localhost", 3306, "root", "1234", "control")) {
+    private static void writeLog(Connection controlConn, int sourceId, String outputPath, Timestamp startTime,
+                                 double sizeBytes,
+                                 boolean success, Timestamp endTime) {
+        try (controlConn) {
             if (controlConn == null) {
                 System.out.println("Không thể ghi log vì kết nối DB control thất bại");
                 return;

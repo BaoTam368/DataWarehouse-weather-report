@@ -13,15 +13,15 @@ import java.util.List;
 
 public class TransformProcess {
 
-    public void runTransform(int sourceId, List<String> transactionSqlPath) {
+    public void runTransform(int sourceId, List<String> transactionSqlPath, Connection stagingConn,
+                             Connection controlConn) {
         // Thời điểm bắt đầu bước RUN
         Timestamp validateStart = new Timestamp(System.currentTimeMillis());
 
         boolean success = false;
 
         try (
-                Connection stagingConn = DataBase.connectDB("localhost", 3306, "root", "1234", "staging");
-                Connection controlConn = DataBase.connectDB("localhost", 3306, "root", "1234", "control")
+                stagingConn; controlConn
         ) {
             // Kiểm tra kết nối database
             if (stagingConn == null || controlConn == null) {
@@ -57,11 +57,12 @@ public class TransformProcess {
 
     /**
      * Ghi log TO (Transform Ongoing)
-     * @param sourceId     Nguồn dữ liệu (config_source.source_id)
-     * @param controlConn  Kết nối DB control
-     * @param success     Trạng thái của quá trình transform
-     * @param transformStart  Thời điểm bắt đầu quá trình transform
-     * @param transformEnd    Thời điểm kết thúc quá trình transform
+     *
+     * @param sourceId       Nguồn dữ liệu (config_source.source_id)
+     * @param controlConn    Kết nối DB control
+     * @param success        Trạng thái của quá trình transform
+     * @param transformStart Thời điểm bắt đầu quá trình transform
+     * @param transformEnd   Thời điểm kết thúc quá trình transform
      */
     private static void extracted(int sourceId, Connection controlConn, boolean success, Timestamp transformStart, Timestamp transformEnd) {
         Control.insertProcessLog(
@@ -77,9 +78,10 @@ public class TransformProcess {
 
     /**
      * Kiêm tra xem quá trình transform có thành công hay không
+     *
      * @param transactionSqlPath danh sách các file .sql cần chạy trong quá trình transform
-     * @param stagingConn kết nối DB staging
-     * @param success trạng thái của quá trình transform
+     * @param stagingConn        kết nối DB staging
+     * @param success            trạng thái của quá trình transform
      * @return true nếu transform thành công, false ngược lại
      * @throws SQLException nếu có lỗi khi thực thi các file .sql
      */
@@ -100,9 +102,10 @@ public class TransformProcess {
 
     /**
      * Check if transform is ready
-     * @param sourceId     Nguồn dữ liệu (config_source.source_id)
-     * @param controlConn  Kết nối DB control
-     * @param validateStart  Thời điểm bắt đầu validate
+     *
+     * @param sourceId      Nguồn dữ liệu (config_source.source_id)
+     * @param controlConn   Kết nối DB control
+     * @param validateStart Thời điểm bắt đầu validate
      * @return true nếu transform đã sẵn sàng, false ngược lại
      */
     private static boolean isReady(int sourceId, Connection controlConn, Timestamp validateStart) {
