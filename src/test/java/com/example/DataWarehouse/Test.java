@@ -1,34 +1,29 @@
 package com.example.DataWarehouse;
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-
 import config.Config;
-import java.io.File;
+import config.MainConfig;
+import database.Control;
+import database.DataBase;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import process.extract.Scraper;
-import process.extract.WeatherData;
+import java.sql.Connection;
+
+import process.extract.*;
 
 public class Test {
 
-	public static void main(String[] args) throws Exception {
-		XmlMapper xmlMapper = new XmlMapper();
-		Config config = xmlMapper.readValue(new File("config.xml"), Config.class);
+    public static void main(String[] args) throws Exception {
 
-		System.out.println("Host: " + config.database.host);
-		System.out.println("Port: " + config.database.port);
-		System.out.println("Src Folder Path: " + config.source.source_folder_path);
-        System.out.println("Src Transaction Path: " + config.transaction.scripts);
-        System.out.println("Src Aggregate Path: " + config.aggregate.scripts);
-        System.out.println("Src Aggregate Path: " + config.mart.scripts);
+        Config config = MainConfig.readConfig();
 
-        String url = config.source.source_url;
-        Document doc = Jsoup.connect(url).get();
-        WeatherData data = Scraper.fetchWeatherData(doc);
-		String fileName = Scraper.generateFileName(config.source.source_folder_path);
-		Scraper.writeToCSV(data, fileName);
-		
-	}
+        Connection conn = DataBase.connectDB(config.database.host, config.database.port, config.database.user,
+                config.database.password, "control");
+
+        int source_id = Control.insertConfigSource(conn, config.source.source_name, config.source.source_url,
+                config.source.source_folder_path, "csv", config.extract.scraping_script_path, "?", "?", "?", "?", "?",
+                "?");
+
+        MainExtract.main(args, conn, config, source_id);
+
+    }
 
 }
