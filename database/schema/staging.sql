@@ -24,6 +24,7 @@ CREATE TABLE official
     Day          VARCHAR(20),
     Temperature   DECIMAL(5, 2),
     UVValue       DECIMAL(4, 2),
+    UVLevel       VARCHAR(20),
     WindDirection VARCHAR(10),
     WindSpeed     DECIMAL(5, 2),
     Humidity      DECIMAL(5, 2),
