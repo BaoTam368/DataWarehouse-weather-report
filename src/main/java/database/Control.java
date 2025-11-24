@@ -8,8 +8,7 @@ import java.sql.Timestamp;
 
 public class Control {
 
-	public static void insertFileLog(Connection conn, int srcId, String srcFileLocation, Timestamp time, String format,
-			int record, double size, String status, Timestamp executeTime) {
+	public static void insertFileLog(Connection conn, int srcId, String srcFileLocation, Timestamp time,  double size, String status, Timestamp executeTime) {
 		try {
 			String sql = "INSERT INTO file_log "
 					+ "(source_id, file_path, time, size, status, execute_time) "
