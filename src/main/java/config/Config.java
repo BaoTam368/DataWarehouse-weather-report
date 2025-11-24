@@ -8,5 +8,8 @@ public class Config {
 	public Database database;
 	public Source source;
 	public Extract extract;
+    public Transaction transaction;
+    public Aggregate aggregate;
+    public Mart mart;
 	public String email;
 }
