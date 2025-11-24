@@ -1,6 +1,7 @@
 package process.transform;
 
 import database.Control;
+import email.EmailUtils;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
@@ -16,7 +17,7 @@ public class TransformProcess {
                              Connection stagingConn, Connection controlConn) {
 
         Timestamp validateStart = new Timestamp(System.currentTimeMillis());
-        boolean success = false;
+        boolean success;
 
         try {
             if (stagingConn == null || controlConn == null) {
@@ -35,7 +36,7 @@ public class TransformProcess {
             stagingConn.setAutoCommit(false);
             Timestamp transformStart = new Timestamp(System.currentTimeMillis());
 
-            success = isSuccess(transactionSqlPath, stagingConn);
+            success = isSuccess(transactionSqlPath, stagingConn, sourceId);
 
             Timestamp transformEnd = new Timestamp(System.currentTimeMillis());
             writeTransformLog(sourceId, controlConn, success, transformStart, transformEnd);
@@ -62,7 +63,7 @@ public class TransformProcess {
         );
     }
 
-    private boolean isSuccess(List<String> transactionSqlPath, Connection stagingConn) throws SQLException {
+    private boolean isSuccess(List<String> transactionSqlPath, Connection stagingConn, int sourceId) throws SQLException {
         try {
             for (String path : transactionSqlPath) {
                 executeSqlScript(stagingConn, path);
@@ -74,6 +75,11 @@ public class TransformProcess {
             stagingConn.rollback();
             System.out.println("Transform thất bại! Chi tiết: " + ex.getMessage());
             ex.printStackTrace();
+
+            EmailUtils.send(
+                    "Lỗi Transform dữ liệu staging",
+                    "Source ID: " + sourceId + "\nChi tiết: " + ex.getMessage()
+            );
             return false;
         }
     }

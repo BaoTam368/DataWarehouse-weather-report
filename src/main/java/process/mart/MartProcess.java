@@ -1,6 +1,7 @@
 package process.mart;
 
 import database.Control;
+import email.EmailUtils;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
@@ -35,7 +36,7 @@ public class MartProcess {
             martConn.setAutoCommit(false);
             Timestamp loadStart = new Timestamp(System.currentTimeMillis());
 
-            success = isSuccess(martSqlPath, martConn);
+            success = isSuccess(martSqlPath, martConn, sourceId);
 
             Timestamp loadEnd = new Timestamp(System.currentTimeMillis());
             writeLoadLog(sourceId, controlConn, success, loadStart, loadEnd);
@@ -53,23 +54,15 @@ public class MartProcess {
      * Ghi log cho bước load mart (LM).
      *
      * @param sourceId    Nguồn dữ liệu (config_source.source_id)
-     * @param controlConn   Kết nối DB control
-     * @param success        Trạng thái của quá trình load mart
-     * @param loadStart      Thời điểm bắt đầu load mart
-     * @param loadEnd        Thời điểm kết thúc load mart
+     * @param controlConn Kết nối DB control
+     * @param success     Trạng thái của quá trình load mart
+     * @param loadStart   Thời điểm bắt đầu load mart
+     * @param loadEnd     Thời điểm kết thúc load mart
      */
     private static void writeLoadLog(int sourceId, Connection controlConn,
                                      boolean success, Timestamp loadStart, Timestamp loadEnd) {
 
         Control.insertProcessLog(
-    /*
-      Thực hiện danh sách script .sql để load dữ liệu vào mart_weather
-
-      @param martSqlPath danh sách các file .sql cần chạy trong quá trình load mart
-     * @param martConn        kết nối DB mart
-     * @return true nếu load mart thành công, false ngược lại
-     * @throws SQLException nếu có lỗi khi thực thi các file .sql
-     */
                 controlConn,
                 sourceId,
                 "LM",
@@ -84,11 +77,11 @@ public class MartProcess {
      * Thực hiện danh sách script .sql để load dữ liệu vào martWeather
      *
      * @param martSqlPath danh sách các file .sql cần chạy trong quá trình load mart
-     * @param martConn        kết nối DB mart
+     * @param martConn    kết nối DB mart
      * @return true nếu load mart thành công, false ngược lại
      * @throws SQLException nếu có lỗi khi thực thi các file .sql
      */
-    private boolean isSuccess(List<String> martSqlPath, Connection martConn) throws SQLException {
+    private boolean isSuccess(List<String> martSqlPath, Connection martConn, int sourceId) throws SQLException {
         try {
             for (String path : martSqlPath) {
                 executeSqlScript(martConn, path);
@@ -99,6 +92,12 @@ public class MartProcess {
         } catch (Exception ex) {
             martConn.rollback();
             System.out.println("Load mart thất bại! Chi tiết: " + ex.getMessage());
+
+            EmailUtils.send(
+                    "Lỗi load dữ liệu sang mart",
+                    "Source ID: " + sourceId + "\nChi tiết: " + ex.getMessage()
+            );
+
             return false;
         }
     }
@@ -107,9 +106,9 @@ public class MartProcess {
      * Check if mart is ready to load data.
      *
      * @param sourceId      Nguồn dữ liệu (config_source.source_id)
-     * @param martConn        kết nối DB mart
+     * @param martConn      kết nối DB mart
      * @param warehouseConn kết nối DB datawarehouse
-     * @param controlConn    kết nối DB control
+     * @param controlConn   kết nối DB control
      * @param validateStart Thời điểm bắt đầu validate
      * @return true nếu mart đã sẵn sàng, false ngược lại
      */
@@ -147,6 +146,7 @@ public class MartProcess {
     private void closeQuietly(Connection conn) {
         try {
             if (conn != null) conn.close();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 }
