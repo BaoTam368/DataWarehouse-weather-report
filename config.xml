@@ -16,7 +16,7 @@
     </source>
 
     <transaction>
-        <script>database/staging/transaction.sql</script>
+        <scripts>database/staging/transaction.sql</scripts>
     </transaction>
 
     <aggregate>
@@ -27,8 +27,7 @@
         <script>database/mart/mart_weather_daily_load.sql</script>
     </mart>
 
-<!--    <procedure>-->
-<!--        <load_warehouse>proc_load_warehouse</load_warehouse>-->
-<!--    </procedure>-->
+    <email>23130116@st.hcmuaf.edu.vn</email>
+
 
 </config>
