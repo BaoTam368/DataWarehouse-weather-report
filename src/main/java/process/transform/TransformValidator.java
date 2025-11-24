@@ -10,12 +10,12 @@ public class TransformValidator {
 
     // Hàm gọi ngoài: validate toàn bộ schema cần cho transform
     public boolean validateAll(Connection stagingConn) {
-        try (stagingConn) {
-            if (stagingConn == null) {
-                System.out.println("❌ Không kết nối được DB staging để validate");
-                return false;
-            }
+        if (stagingConn == null) {
+            System.out.println("❌ Không kết nối được DB staging để validate");
+            return false;
+        }
 
+        try {
             boolean tempOk = validateTempTable(stagingConn);
             boolean officialOk = validateOfficialTable(stagingConn);
 
@@ -28,7 +28,8 @@ public class TransformValidator {
             }
 
         } catch (Exception e) {
-            System.out.println("❌ Lỗi khi validate schema");
+            System.out.println("❌ Lỗi khi validate schema: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }

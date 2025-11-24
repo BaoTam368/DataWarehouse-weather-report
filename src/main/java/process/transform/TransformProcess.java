@@ -13,45 +13,34 @@ import java.util.List;
 
 public class TransformProcess {
 
-    public void runTransform(int sourceId, List<String> transactionSqlPath, Connection stagingConn,
-                             Connection controlConn) {
-        // Thời điểm bắt đầu bước RUN
+    public void runTransform(int sourceId, List<String> transactionSqlPath,
+                             Connection stagingConn, Connection controlConn) {
         Timestamp validateStart = new Timestamp(System.currentTimeMillis());
-
         boolean success = false;
 
-        try (
-                stagingConn; controlConn
-        ) {
-            // Kiểm tra kết nối database
+        try (stagingConn; controlConn) {
             if (stagingConn == null || controlConn == null) {
                 System.out.println("Kết nối DB staging/control thất bại");
                 return;
             }
 
-            // 1. VALIDATE SCHEMA -> process_code = TR
             boolean ready = isReady(sourceId, stagingConn, controlConn, validateStart);
-
             if (!ready) {
                 System.out.println("Schema không đúng, dừng Transform.");
                 return;
             }
 
-            // 2. THỰC HIỆN TRANSFORM -> process_code = TO
-            // Tắt auto commit để có thể rollback tránh hỏng schema do từng phần trong script chạy lẻ
             stagingConn.setAutoCommit(false);
             Timestamp transformStart = new Timestamp(System.currentTimeMillis());
 
             success = isSuccess(transactionSqlPath, stagingConn, success);
 
-            // Thời điểm kết thúc RUN
             Timestamp transformEnd = new Timestamp(System.currentTimeMillis());
-
-            // Ghi log TO (Transform Ongoing)
             extracted(sourceId, controlConn, success, transformStart, transformEnd);
 
         } catch (Exception e) {
-            System.out.println("Lỗi chung khi chạy Transform");
+            System.out.println("Lỗi chung khi chạy Transform: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
