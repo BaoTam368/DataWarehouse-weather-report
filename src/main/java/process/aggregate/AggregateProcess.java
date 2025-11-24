@@ -1,6 +1,7 @@
 package process.aggregate;
 
 import database.Control;
+import email.EmailUtils;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
@@ -64,7 +65,7 @@ public class AggregateProcess {
             warehouseConn.setAutoCommit(false);
             Timestamp aggregateStart = new Timestamp(System.currentTimeMillis());
 
-            success = executeAggregateScripts(aggregateSqlPath, warehouseConn);
+            success = executeAggregateScripts(aggregateSqlPath, warehouseConn, sourceId);
 
             Timestamp aggregateEnd = new Timestamp(System.currentTimeMillis());
 
@@ -89,7 +90,7 @@ public class AggregateProcess {
      * Thực hiện danh sách script .sql để aggregate
      */
     private boolean executeAggregateScripts(List<String> aggregateSqlPath,
-                                            Connection warehouseConn) throws SQLException {
+                                            Connection warehouseConn, int sourceId) throws SQLException {
         boolean success = false;
         try {
             for (String path : aggregateSqlPath) {
@@ -102,6 +103,11 @@ public class AggregateProcess {
             warehouseConn.rollback();
             System.out.println("Aggregate weather daily thất bại!");
             System.out.println("Chi tiết lỗi khi aggregate: " + ex.getMessage());
+
+            EmailUtils.send(
+                    "Lỗi load dữ liệu sang aggregate table",
+                    "Source ID: " + sourceId + "\nChi tiết: " + ex.getMessage()
+            );
             ex.printStackTrace();
         }
         return success;

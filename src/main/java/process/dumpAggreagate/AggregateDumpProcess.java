@@ -2,6 +2,7 @@ package process.dumpAggreagate;
 
 import database.Control;
 import database.DataBase;
+import email.EmailUtils;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -106,6 +107,10 @@ public class AggregateDumpProcess {
             );
         } catch (Exception e) {
             System.out.println("Ghi log cho dump aggregate thất bại!");
+            EmailUtils.send(
+                    "Lỗi khi dump aggregate file",
+                    "Source ID: " + sourceId + "\nChi tiết: " + e.getMessage()
+            );
         }
     }
 
