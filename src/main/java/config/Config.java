@@ -9,8 +9,8 @@ public class Config {
     public Source source;
     public Extract extract;
     public Transaction transaction;
+    public Warehouse warehouse;
     public Aggregate aggregate;
     public Mart mart;
     public String email;
-    public Warehouse warehouse;
 }

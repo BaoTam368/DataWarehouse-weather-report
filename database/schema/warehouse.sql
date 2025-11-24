@@ -1,75 +1,52 @@
-CREATE DATABASE IF NOT EXISTS warehouse CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE warehouse;
+CREATE DATABASE IF NOT EXISTS datawarehouse CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- SET FOREIGN_KEY_CHECKS = 0;
+-- DROP TABLE date_dim;
+-- SET FOREIGN_KEY_CHECKS = 1;
+-- truncate table date_dim;
+use datawarehouse;
+CREATE TABLE date_dim (
+    SK INT AUTO_INCREMENT PRIMARY KEY,
+    DateOnly DATE NOT null UNIQUE,
+    Day INT,
+    Month INT,
+    Year INT,
+    Weekday VARCHAR(20)
+);
 
--- DimTime: lưu cả datetime + các thành phần (năm/tháng/ngày/giờ/phút)
-CREATE TABLE IF NOT EXISTS DimTime
-(
-    TimeKey      INT AUTO_INCREMENT PRIMARY KEY,
-    FullDateTime DATETIME NOT NULL,
-    DateOnly     DATE     NOT NULL,
-    Year         INT      NOT NULL,
-    Quarter      TINYINT  NOT NULL,
-    Month        TINYINT  NOT NULL,
-    Day          TINYINT  NOT NULL,
-    Weekday      VARCHAR(20),
-    Hour         TINYINT  NOT NULL,
-    Minute       TINYINT  NOT NULL,
-    UNIQUE KEY uk_dimtime (FullDateTime)
-) ENGINE = InnoDB;
+CREATE TABLE DimTime (
+    TimeKey INT auto_increment PRIMARY KEY,
+    FullDate DATETIME,
+    Day INT,
+    Month INT,
+    Year INT,
+    Weekday NVARCHAR(20)
+);
 
--- DimWind: tách hướng/tốc độ (surrogate key, tránh trùng)
-CREATE TABLE IF NOT EXISTS DimWind
-(
-    WindKey       INT AUTO_INCREMENT PRIMARY KEY,
-    WindDirection VARCHAR(10)   NOT NULL,
-    WindSpeed     DECIMAL(5, 2) NOT NULL,
-    UNIQUE KEY uk_dimwind (WindDirection, WindSpeed)
-) ENGINE = InnoDB;
+CREATE TABLE DimWind (
+    WindKey INT auto_increment PRIMARY KEY,
+    Direction NVARCHAR(10),            
+    Speed DECIMAL(5,2)                
+);
 
--- DimUV: có thể thêm mức UV nếu muốn
-CREATE TABLE IF NOT EXISTS DimUV
-(
-    UVKey   INT AUTO_INCREMENT PRIMARY KEY,
-    UVValue DECIMAL(4, 2) NOT NULL,
-    -- Ví dụ phân loại mức UV (optional):
-    UVLevel VARCHAR(20) GENERATED ALWAYS AS (
-        CASE
-            WHEN UVValue IS NULL THEN NULL
-            WHEN UVValue < 3 THEN 'Low'
-            WHEN UVValue < 6 THEN 'Moderate'
-            WHEN UVValue < 8 THEN 'High'
-            WHEN UVValue < 11 THEN 'Very High'
-            ELSE 'Extreme'
-            END
-        ) VIRTUAL,
-    UNIQUE KEY uk_dimuv (UVValue)
-) ENGINE = InnoDB;
+CREATE TABLE DimUV (
+    UVKey INT auto_increment PRIMARY KEY,
+    UVValue DECIMAL(4,2),             
+    UVLevel NVARCHAR(20)               
+);
 
--- DimCloud: gom Cloud cover + Cloud ceiling
-CREATE TABLE IF NOT EXISTS DimCloud
-(
-    CloudKey     INT AUTO_INCREMENT PRIMARY KEY,
-    CloudCover   DECIMAL(5, 2) NOT NULL,
-    CloudCeiling INT           NULL,
-    UNIQUE KEY uk_dimcloud (CloudCover, CloudCeiling)
-) ENGINE = InnoDB;
-
-CREATE TABLE IF NOT EXISTS FactWeather
-(
-    WeatherKey  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    TimeKey     INT NOT NULL,
-    WindKey     INT,
-    UVKey       INT,
-    CloudKey    INT,
-
-    Temperature DECIMAL(5, 2),
-    Humidity    DECIMAL(5, 2),
-    DewPoint    DECIMAL(5, 2),
-    Pressure    DECIMAL(6, 2),
-    Visibility  DECIMAL(5, 2),
-
-    CONSTRAINT fk_fact_time FOREIGN KEY (TimeKey) REFERENCES DimTime (TimeKey),
-    CONSTRAINT fk_fact_wind FOREIGN KEY (WindKey) REFERENCES DimWind (WindKey),
-    CONSTRAINT fk_fact_uv FOREIGN KEY (UVKey) REFERENCES DimUV (UVKey),
-    CONSTRAINT fk_fact_cloud FOREIGN KEY (CloudKey) REFERENCES DimCloud (CloudKey)
-) ENGINE = InnoDB;
+CREATE TABLE datawarehouse.FactWeather (
+    SK INT PRIMARY KEY,
+    Day INT,
+    WindKey INT,
+    UVKey INT,
+    Temperature DECIMAL(4,1),
+    Humidity DECIMAL(4,1),
+    DewPoint DECIMAL(4,1),
+    Pressure DECIMAL(6,2),
+    CloudCover DECIMAL(5,2),
+    Visibility DECIMAL(5,2),
+    CloudCeiling INT,
+    FOREIGN KEY (SK) REFERENCES datawarehouse.date_dim(SK),
+    FOREIGN KEY (WindKey) REFERENCES datawarehouse.DimWind(WindKey),
+    FOREIGN KEY (UVKey) REFERENCES datawarehouse.DimUV(UVKey)
+);

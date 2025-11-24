@@ -12,7 +12,7 @@ import java.sql.PreparedStatement;
 public class Main {
 
     // Đường dẫn file CSV cần load
-    private static final Path CSV_PATH = Paths.get("D:\\DataWareHouse\\Data\\weather_log.csv");
+    private static final Path CSV_PATH = Paths.get("data/weather_log(20-11-2025_10-07-33).csv");
     // Câu lệnh INSERT vào bảng staging (bảng temp)
     private static final String INSERT_SQL =
             "INSERT INTO temp (FullDate, Weekday, Day, Temperature, UVValue, WindDirection, Humidity, DewPoint, Pressure, Cloud, Visibility, CloudCeiling) "
@@ -24,7 +24,7 @@ public class Main {
                 // Đọc file CSV
                 BufferedReader br = new BufferedReader(new FileReader(CSV_PATH.toFile()));
                 // Kết nối tới database staging
-                Connection conn = DataBase.connectDB("localhost",3306,"root","123456","staging");
+                Connection conn = DataBase.connectDB("localhost",3306,"root","1234","staging");
                 // Chuẩn bị statement để insert dữ liệu
                 PreparedStatement stmt = conn.prepareStatement(INSERT_SQL);
         ) {

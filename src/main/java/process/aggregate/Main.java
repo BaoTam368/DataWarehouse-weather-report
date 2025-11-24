@@ -19,7 +19,7 @@ public class Main {
         int port = config.database.port;
         String user = config.database.user;
         String password = config.database.password;
-        Connection warehouseConn = DataBase.connectDB(host, port, user, password, "warehouse");
+        Connection warehouseConn = DataBase.connectDB(host, port, user, password, "datawarehouse");
         Connection controlConn = DataBase.connectDB(host, port, user, password, "control");
 
         // Gọi process aggregate

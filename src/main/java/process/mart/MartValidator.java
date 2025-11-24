@@ -1,7 +1,5 @@
 package process.mart;
 
-import database.DataBase;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,22 +8,28 @@ import java.util.*;
 public class MartValidator {
 
     private static final String DB_MART = "mart_weather";
-    private static final String DB_WAREHOUSE = "warehouse";
+    private static final String DB_WAREHOUSE = "datawarehouse";
 
+    /**
+     * Validate schema cho mart:
+     *  1) datawarehouse.aggregate_weather_daily
+     *  2) mart_weather.WeatherDailySummary
+     */
     public boolean validateAll(Connection martConn, Connection warehouseConn) {
+
+        if (martConn == null || warehouseConn == null) {
+            System.out.println("❌ Không kết nối được DB mart_weather hoặc datawarehouse để validate");
+            return false;
+        }
+
         boolean ok = true;
 
-        try (martConn; warehouseConn) {
-
-            if (martConn == null || warehouseConn == null) {
-                System.out.println("❌ Không kết nối được DB mart_weather hoặc warehouse để validate");
-                return false;
-            }
-
-            ok &= validateWarehouseAggregate(martConn);
+        try {
+            ok &= validateWarehouseAggregate(warehouseConn);
             ok &= validateMartWeatherSummary(martConn);
-
         } catch (Exception e) {
+            System.out.println("❌ Lỗi khi validate schema Mart: " + e.getMessage());
+            e.printStackTrace();
             ok = false;
         }
 
@@ -38,38 +42,45 @@ public class MartValidator {
         return ok;
     }
 
+    // ===== Validate bảng aggregate_weather_daily trong datawarehouse =====
     private boolean validateWarehouseAggregate(Connection conn) throws Exception {
         List<String> requiredCols = Arrays.asList(
-                "DateOnly", "AvgTemp", "MinTemp", "MaxTemp",
-                "AvgHumidity", "AvgPressure"
+                "DATEONLY", "AVGTEMP", "MINTEMP", "MAXTEMP",
+                "AVGHUMIDITY", "AVGPRESSURE"
         );
         return validateColumns(conn, DB_WAREHOUSE, "aggregate_weather_daily", requiredCols);
     }
 
+    // ===== Validate bảng WeatherDailySummary trong mart_weather =====
     private boolean validateMartWeatherSummary(Connection conn) throws Exception {
         List<String> requiredCols = Arrays.asList(
-                "DateOnly", "AvgTemp", "MinTemp", "MaxTemp",
-                "AvgHumidity", "AvgPressure", "TempCategory"
+                "DATEONLY", "AVGTEMP", "MINTEMP", "MAXTEMP",
+                "AVGHUMIDITY", "AVGPRESSURE", "TEMPCATEGORY"
         );
         return validateColumns(conn, DB_MART, "WeatherDailySummary", requiredCols);
     }
 
-    private boolean validateColumns(Connection conn, String dbName, String tableName, List<String> requiredColumns) throws Exception {
+    // ===== Generic: Kiểm tra bảng có đủ cột chưa =====
+    private boolean validateColumns(Connection conn, String dbName, String tableName,
+                                    List<String> requiredColumns) throws Exception {
+
         String sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " +
                 "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?";
+
         PreparedStatement ps = conn.prepareStatement(sql);
         ps.setString(1, dbName);
         ps.setString(2, tableName);
+
         ResultSet rs = ps.executeQuery();
 
         Set<String> existing = new HashSet<>();
         while (rs.next()) {
-            existing.add(rs.getString("COLUMN_NAME").toLowerCase());
+            existing.add(rs.getString("COLUMN_NAME").toUpperCase());
         }
 
         boolean ok = true;
         for (String col : requiredColumns) {
-            if (!existing.contains(col.toLowerCase())) {
+            if (!existing.contains(col.toUpperCase())) {
                 System.out.println("❌ [" + dbName + "." + tableName + "] thiếu cột: " + col);
                 ok = false;
             }

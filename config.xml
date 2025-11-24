@@ -19,6 +19,10 @@
         <scripts>database/staging/transaction.sql</scripts>
     </transaction>
 
+    <warehouse>
+        <script>database/warehouse/proc_load_warehouse.sql</script>
+    </warehouse>
+
     <aggregate>
         <script>database/warehouse/aggregate_weather_daily.sql</script>
     </aggregate>
