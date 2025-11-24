@@ -77,6 +77,8 @@ public class AggregateProcess {
         } catch (Exception ex) {
             warehouseConn.rollback();
             System.out.println("Aggregate weather daily thất bại!");
+            System.out.println("Chi tiết lỗi khi aggregate: " + ex.getMessage());
+            ex.printStackTrace();
         }
         return success;
     }

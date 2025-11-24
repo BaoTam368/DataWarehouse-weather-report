@@ -76,6 +76,7 @@ public class MartProcess {
         } catch (Exception ex) {
             martConn.rollback();
             System.out.println("Load mart thất bại!");
+            System.out.println("Chi tiết lỗi khi load mart: " + ex.getMessage());
         }
         return success;
     }

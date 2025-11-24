@@ -92,6 +92,8 @@ public class TransformProcess {
         } catch (Exception ex) {
             stagingConn.rollback();
             System.out.println("Transform thất bại");
+            System.out.println("Chi tiết lỗi Transform: " + ex.getMessage());
+            ex.printStackTrace();
         }
         return success;
     }

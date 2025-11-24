@@ -58,6 +58,7 @@ public class AggregateDumpProcess {
 
         } catch (Exception e) {
             System.out.println("Dump aggregate -> CSV thất bại!");
+            System.out.println("Chi tiết lỗi khi dump file: " + e.getMessage());
         }
 
         // 2. Ghi log
@@ -67,12 +68,13 @@ public class AggregateDumpProcess {
 
     /**
      * Write log for dump aggregate process
-     * @param sourceId     Nguồn dữ liệu (config_source.source_id)
-     * @param outputPath  Đường dẫn file đã được dump
-     * @param startTime    Thời điểm bắt đầu dump
-     * @param sizeBytes   Kích thước file đã được dump (byte)
-     * @param success     Trạng thái của quá trình dump
-     * @param endTime      Thời điểm kết thúc dump
+     *
+     * @param sourceId   Nguồn dữ liệu (config_source.source_id)
+     * @param outputPath Đường dẫn file đã được dump
+     * @param startTime  Thời điểm bắt đầu dump
+     * @param sizeBytes  Kích thước file đã được dump (byte)
+     * @param success    Trạng thái của quá trình dump
+     * @param endTime    Thời điểm kết thúc dump
      */
     private static void writeLog(int sourceId, String outputPath, Timestamp startTime, double sizeBytes, boolean success, Timestamp endTime) {
         try (Connection controlConn = DataBase.connectDB("localhost", 3306, "root", "1234", "control")) {
@@ -109,10 +111,11 @@ public class AggregateDumpProcess {
      * Writes a line of the aggregated weather data to the given writer.
      * The line format is:
      * DateOnly,AvgTemp,MinTemp,MaxTemp,AvgHumidity,AvgPressure,RowCount
-     * @param rs the result set containing the aggregated weather data
+     *
+     * @param rs     the result set containing the aggregated weather data
      * @param writer the writer to write the line to
      * @throws SQLException if the result set does not contain the expected columns
-     * @throws IOException if the writer throws an IOException
+     * @throws IOException  if the writer throws an IOException
      */
     private static void writeLine(ResultSet rs, BufferedWriter writer) throws SQLException, IOException {
         Date date = rs.getDate("DateOnly");
