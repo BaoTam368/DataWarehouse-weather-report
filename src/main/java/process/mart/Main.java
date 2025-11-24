@@ -20,6 +20,7 @@ public class Main {
         String user = config.database.user;
         String password = config.database.password;
         Connection martConn = DataBase.connectDB(host, port, user, password, "mart_weather");
+        Connection warehouseConn = DataBase.connectDB(host, port, user, password, "mart_weather");
         Connection controlConn = DataBase.connectDB(host, port, user, password, "control");
 
         // Gọi process aggregate
@@ -27,6 +28,6 @@ public class Main {
         List<String> paths = config.mart.scripts;
 
         MartProcess process = new MartProcess();
-        process.runMart(sourceId, paths, martConn, controlConn);
+        process.runMart(sourceId, paths, martConn, warehouseConn, controlConn);
     }
 }

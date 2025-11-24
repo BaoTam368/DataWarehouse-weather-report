@@ -13,7 +13,8 @@ import java.util.List;
 
 public class MartProcess {
 
-    public void runMart(int sourceId, List<String> martSqlPath, Connection martConn, Connection controlConn) {
+    public void runMart(int sourceId, List<String> martSqlPath, Connection martConn,
+                        Connection warehouseConn, Connection controlConn) {
         // Thời điểm bắt đầu run
         Timestamp validateStart = new Timestamp(System.currentTimeMillis());
         boolean success = false;
@@ -28,7 +29,7 @@ public class MartProcess {
             }
 
             // 1. VALIDATE SCHEMA -> MR (Mart Ready)
-            boolean ready = isReady(sourceId, controlConn, validateStart);
+            boolean ready = isReady(sourceId, martConn, controlConn, warehouseConn, validateStart);
 
             if (!ready) {
                 System.out.println("Schema không đúng, dừng load mart.");
@@ -80,9 +81,10 @@ public class MartProcess {
         return success;
     }
 
-    private static boolean isReady(int sourceId, Connection controlConn, Timestamp validateStart) {
+    private static boolean isReady(int sourceId, Connection martConn, Connection warehouse, Connection controlConn,
+                                   Timestamp validateStart) {
         MartValidator validator = new MartValidator();
-        boolean ready = validator.validateAll();
+        boolean ready = validator.validateAll(martConn, warehouse);
 
         Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
 
