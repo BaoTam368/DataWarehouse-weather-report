@@ -9,4 +9,5 @@ public class Transaction {
     @JacksonXmlElementWrapper(useWrapping = false)
     @JacksonXmlProperty(localName = "script")
     public List<String> scripts;
+
 }

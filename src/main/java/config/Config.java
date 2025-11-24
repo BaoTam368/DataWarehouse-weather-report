@@ -5,11 +5,12 @@ import com.fasterxml.jackson.dataformat.xml.annotation.*;
 @JacksonXmlRootElement(localName = "config")
 public class Config {
 
-	public Database database;
-	public Source source;
-	public Extract extract;
+    public Database database;
+    public Source source;
+    public Extract extract;
     public Transaction transaction;
     public Aggregate aggregate;
     public Mart mart;
-	public String email;
+    public String email;
+    public Warehouse warehouse;
 }
