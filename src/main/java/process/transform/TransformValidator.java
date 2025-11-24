@@ -10,15 +10,15 @@ import java.util.*;
 public class TransformValidator {
 
     // Hàm gọi ngoài: validate toàn bộ schema cần cho transform
-    public boolean validateAll(Connection connection) {
-        try (connection) {
-            if (connection == null) {
+    public boolean validateAll(Connection stagingConn) {
+        try (stagingConn) {
+            if (stagingConn == null) {
                 System.out.println("❌ Không kết nối được DB staging để validate");
                 return false;
             }
 
-            boolean tempOk = validateTempTable(connection);
-            boolean officialOk = validateOfficialTable(connection);
+            boolean tempOk = validateTempTable(stagingConn);
+            boolean officialOk = validateOfficialTable(stagingConn);
 
             if (tempOk && officialOk) {
                 System.out.println("✅ Transform Ready (TR): Schema staging OK");
