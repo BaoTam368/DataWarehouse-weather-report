@@ -30,7 +30,7 @@ public class TransformProcess {
             }
 
             // 1. VALIDATE SCHEMA -> process_code = TR
-            boolean ready = isReady(sourceId, controlConn, validateStart);
+            boolean ready = isReady(sourceId, stagingConn, controlConn, validateStart);
 
             if (!ready) {
                 System.out.println("Schema không đúng, dừng Transform.");
@@ -108,9 +108,10 @@ public class TransformProcess {
      * @param validateStart Thời điểm bắt đầu validate
      * @return true nếu transform đã sẵn sàng, false ngược lại
      */
-    private static boolean isReady(int sourceId, Connection controlConn, Timestamp validateStart) {
+    private static boolean isReady(int sourceId,Connection stagingConn, Connection controlConn,
+                                   Timestamp validateStart) {
         TransformValidator validator = new TransformValidator();
-        boolean ready = validator.validateAll();
+        boolean ready = validator.validateAll(stagingConn);
 
         Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
 
