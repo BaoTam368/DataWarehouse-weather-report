@@ -15,18 +15,12 @@ import process.loadwh.LoadWarehouseProcess;
 import process.transform.TransformProcess;
 
 
+
 public class Test {
 
 	public static void main(String[] args) throws Exception {
 		XmlMapper xmlMapper = new XmlMapper();
 		Config config = xmlMapper.readValue(new File("D:/DW/DataWarehouse/config.xml"), Config.class);
-
-		System.out.println("Host: " + config.database.host);
-		System.out.println("Port: " + config.database.port);
-		System.out.println("Src Folder Path: " + config.source.source_folder_path);
-        System.out.println("Src Transaction Path: " + config.transaction.scripts);
-        System.out.println("Src Aggregate Path: " + config.aggregate.scripts);
-        System.out.println("Src Aggregate Path: " + config.mart.scripts);
 
 		//EXTRACT
         String url = config.source.source_url;
@@ -34,16 +28,22 @@ public class Test {
 
         WeatherData data = Scraper.fetchWeatherData(doc);
 		String fileName = Scraper.generateFileName(config.source.source_folder_path);
+
 		Scraper.writeToCSV(data, fileName);
 		//LOAD CSV
 		loadCsvToStaging.load(fileName);
 		//TRANSFORM
-		TransformProcess transform = new TransformProcess();
-		transform.runTransform(config.transaction.scripts);
+		int sourceId = config.source.source_id;
+		List<String> paths = config.transaction.scripts;
+
+		TransformProcess process = new TransformProcess();
+		process.runTransform(sourceId, paths);
 
 		// LOAD WAREHOUSE
 		LoadWarehouseProcess loadWH = new  LoadWarehouseProcess();
-		loadWH.runLoadWarehouse(List.of("D:\\DW\\DataWarehouse\\database\\warehouse\\proc_load_warehouse.sql"));
+		loadWH.runLoadWarehouse("AccuWeather");
+
+		System.out.println("🎉 ETL COMPLETED SUCCESSFULLY!");
 	}
 
 }
