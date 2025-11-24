@@ -12,18 +12,17 @@ public class MartValidator {
     private static final String DB_MART = "mart_weather";
     private static final String DB_WAREHOUSE = "warehouse";
 
-    public boolean validateAll() {
+    public boolean validateAll(Connection martConn, Connection warehouseConn) {
         boolean ok = true;
 
-        try (Connection martConn = DataBase.connectDB("localhost", 3306, "root", "1234", DB_MART);
-             Connection whConn   = DataBase.connectDB("localhost", 3306, "root", "1234", DB_WAREHOUSE)) {
+        try (martConn; warehouseConn) {
 
-            if (martConn == null || whConn == null) {
+            if (martConn == null || warehouseConn == null) {
                 System.out.println("❌ Không kết nối được DB mart_weather hoặc warehouse để validate");
                 return false;
             }
 
-            ok &= validateWarehouseAggregate(whConn);
+            ok &= validateWarehouseAggregate(martConn);
             ok &= validateMartWeatherSummary(martConn);
 
         } catch (Exception e) {

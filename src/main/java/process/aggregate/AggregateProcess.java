@@ -28,7 +28,7 @@ public class AggregateProcess {
             }
 
             // 1. VALIDATE SCHEMA -> process_code = AR
-            boolean ready = isReady(sourceId, controlConn, validateStart);
+            boolean ready = isReady(sourceId, warehouseConn, controlConn, validateStart);
 
             if (!ready) {
                 System.out.println("Schema warehouse không đúng, dừng Aggregate.");
@@ -81,9 +81,10 @@ public class AggregateProcess {
         return success;
     }
 
-    private static boolean isReady(int sourceId, Connection controlConn, Timestamp validateStart) {
+    private static boolean isReady(int sourceId, Connection warehouseConn, Connection controlConn,
+                                   Timestamp validateStart) {
         AggregateValidator validator = new AggregateValidator();
-        boolean ready = validator.validateAll();
+        boolean ready = validator.validateAll(warehouseConn);
 
         Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
 
