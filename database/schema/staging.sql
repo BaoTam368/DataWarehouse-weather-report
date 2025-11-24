@@ -8,7 +8,7 @@ create table temp
     Day         varchar(20),
     Temperature  varchar(20),
     UVValue      varchar(20),
-    Wind         varchar(20),
+    WindDirection         varchar(20),
     Humidity     varchar(20),
     DewPoint     varchar(20),
     Pressure     varchar(20),
