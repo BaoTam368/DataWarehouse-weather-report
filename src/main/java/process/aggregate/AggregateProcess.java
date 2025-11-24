@@ -40,21 +40,7 @@ public class AggregateProcess {
             }
 
             // 1. VALIDATE SCHEMA -> process_code = AR
-            AggregateValidator validator = new AggregateValidator();
-            boolean ready = validator.validateAll(warehouseConn);
-
-            Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
-
-            // Ghi log AR (Aggregate Ready)
-            Control.insertProcessLog(
-                    controlConn,
-                    sourceId,
-                    "AR",                               // Aggregate Ready
-                    "Validate schema before aggregate", // process_name
-                    ready ? "SC" : "F",                 // SC = OK, F = fail
-                    validateStart,
-                    validateEnd
-            );
+            boolean ready = isReady(sourceId, warehouseConn, controlConn, validateStart);
 
             if (!ready) {
                 System.out.println("Schema warehouse không đúng, dừng Aggregate.");
@@ -70,20 +56,43 @@ public class AggregateProcess {
             Timestamp aggregateEnd = new Timestamp(System.currentTimeMillis());
 
             // Ghi log AO (Aggregate Ongoing / Done)
-            Control.insertProcessLog(
-                    controlConn,
-                    sourceId,
-                    "AO",                               // Aggregate Ongoing
-                    "Aggregate weather daily",          // process_name
-                    success ? "SC" : "F",               // SC / F
-                    aggregateStart,
-                    aggregateEnd
-            );
+            extracted(sourceId, controlConn, success, aggregateStart, aggregateEnd);
 
         } catch (Exception e) {
             System.out.println("Lỗi chung khi chạy Aggregate: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private static void extracted(int sourceId, Connection controlConn, boolean success, Timestamp aggregateStart, Timestamp aggregateEnd) {
+        Control.insertProcessLog(
+                controlConn,
+                sourceId,
+                "AO",                               // Aggregate Ongoing
+                "Aggregate weather daily",          // process_name
+                success ? "SC" : "F",               // SC / F
+                aggregateStart,
+                aggregateEnd
+        );
+    }
+
+    private static boolean isReady(int sourceId, Connection warehouseConn, Connection controlConn, Timestamp validateStart) {
+        AggregateValidator validator = new AggregateValidator();
+        boolean ready = validator.validateAll(warehouseConn);
+
+        Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
+
+        // Ghi log AR (Aggregate Ready)
+        Control.insertProcessLog(
+                controlConn,
+                sourceId,
+                "AR",                               // Aggregate Ready
+                "Validate schema before aggregate", // process_name
+                ready ? "SC" : "F",                 // SC = OK, F = fail
+                validateStart,
+                validateEnd
+        );
+        return ready;
     }
 
     /**
