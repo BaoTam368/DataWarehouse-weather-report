@@ -12,8 +12,9 @@ SELECT STR_TO_DATE(FullDate, '%Y-%m-%d %H:%i:%s') AS FullDate,                  
        `Day`,
        CAST(REGEXP_SUBSTR(Temperature, '-?[0-9]+(\\.[0-9]+)?') AS DECIMAL(5, 2)), -- Extract numeric part of Temperature and convert to DECIMAL
        CAST(REGEXP_SUBSTR(UVValue, '-?[0-9]+(\\.[0-9]+)?') AS DECIMAL(4, 2)),     -- Extract numeric part of UVValue and convert to DECIMAL
-       SUBSTRING_INDEX(Wind, ' ', 1),
-       CAST(REGEXP_SUBSTR(Wind, '[0-9]+(\\.[0-9]+)?') AS DECIMAL(5, 2)),          -- Extract numeric part of WindSpeed and convert to DECIMAL
+       SUBSTRING_INDEX(WindDirection, ' ', 1),
+       CAST(REGEXP_SUBSTR(WindDirection, '[0-9]+(\\.[0-9]+)?') AS DECIMAL(5, 2)),          -- Extract numeric part of
+#        WindSpeed and convert to DECIMAL
        CAST(REGEXP_SUBSTR(Humidity, '-?[0-9]+(\\.[0-9]+)?') AS DECIMAL(5, 2)),    -- Extract numeric part of Humidity and convert to DECIMAL
        CAST(REGEXP_SUBSTR(DewPoint, '-?[0-9]+(\\.[0-9]+)?') AS DECIMAL(5, 2)),    -- Extract numeric part of DewPoint and convert to DECIMAL
        CAST(REGEXP_SUBSTR(Pressure, '-?[0-9]+(\\.[0-9]+)?') AS DECIMAL(6, 2)),    -- Extract numeric part of Pressure and convert to DECIMAL

@@ -1,6 +1,5 @@
 package process.transform;
 
-import database.DataBase;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,18 +8,16 @@ import java.util.*;
 
 public class TransformValidator {
 
-    private static final String DB_NAME = "staging";
-
     // Hàm gọi ngoài: validate toàn bộ schema cần cho transform
-    public boolean validateAll() {
-        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", DB_NAME)) {
-            if (conn == null) {
+    public boolean validateAll(Connection stagingConn) {
+        try (stagingConn) {
+            if (stagingConn == null) {
                 System.out.println("❌ Không kết nối được DB staging để validate");
                 return false;
             }
 
-            boolean tempOk = validateTempTable(conn);
-            boolean officialOk = validateOfficialTable(conn);
+            boolean tempOk = validateTempTable(stagingConn);
+            boolean officialOk = validateOfficialTable(stagingConn);
 
             if (tempOk && officialOk) {
                 System.out.println("✅ Transform Ready (TR): Schema staging OK");
@@ -41,7 +38,7 @@ public class TransformValidator {
     private boolean validateTempTable(Connection conn) throws Exception {
         List<String> requiredCols = Arrays.asList(
                 "FullDate", "Weekday", "Day",
-                "Temperature", "UVValue", "Wind",
+                "Temperature", "UVValue", "WindDirection",
                 "Humidity", "DewPoint", "Pressure",
                 "Cloud", "Visibility", "CloudCeiling"
         );
@@ -64,7 +61,7 @@ public class TransformValidator {
         String sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " +
                 "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?";
         PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setString(1, DB_NAME);
+        ps.setString(1, "staging");
         ps.setString(2, tableName);
         ResultSet rs = ps.executeQuery();
 
