@@ -21,7 +21,7 @@ public class Test {
 
 	public static void main(String[] args) throws Exception {
 
-		Config config = MainConfig.readConfig();
+		Config config = MainConfig.readConfig("config.xml");
 
 		Connection conn = DataBase.connectDB(config.database.host, config.database.port, config.database.user,
 				config.database.password, "control");
@@ -30,8 +30,8 @@ public class Test {
 				config.source.source_folder_path, "csv", config.extract.scraping_script_path, "?", "?", "?", "?", "?",
 				"?");
 
-		MainExtract.main(args, conn, config, source_id);
-
+		MainExtract.runExtract(args, config, source_id);
+		conn.close();
 	}
 
 }

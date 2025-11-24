@@ -10,18 +10,20 @@
     <source>
         <source_id>1</source_id>
         <source_name>AccuWeather</source_name>
-	<source_url>https://www.accuweather.com/vi/vn/ho-chi-minh-city/353981/current-weather/353981?unit=c</source_url>
+		<source_url>https://www.accuweather.com/vi/vn/ho-chi-minh-city/353981/current-weather/353981?unit=c</source_url>
         <source_folder_path>\data</source_folder_path>
         <file_format>csv</file_format>
     </source>
 
     <extract>
-    <scraping_script_path>\src\main\java\extract\Scraper.java</scraping_script_path>
-	<process_name>extract</process_name>
-	
+    	<scraping_script_path>\src\main\java\extract\Scraper.java</scraping_script_path>
+		<process_name>extract</process_name>
     </extract>
-
-	<email>23130286@st.hcmuaf.edu.vn</email>
-
+	
+	<email>
+		<email_admin>23130286@st.hcmuaf.edu.vn</email_admin>
+		<email_send>baotam.testing.system@gmail.com</email_send>
+		<password>epzm sdfa jhkh yobh</password>
+	</email>
 </config>
 	

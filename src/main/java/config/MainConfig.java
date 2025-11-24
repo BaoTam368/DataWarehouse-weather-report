@@ -6,13 +6,13 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import email.EmailUtils;
 
 public class MainConfig {
-	public static Config readConfig() {
+	public static Config readConfig(String configPath) {
 		try {
 			// Tạo một đối tượng XmlMapper để đọc và ánh xạ dữ liệu XML sang đối tượng Java
 			XmlMapper xmlMapper = new XmlMapper();
 
 			// Đọc file "config.xml" và chuyển đổi nội dung của nó thành đối tượng Config
-			return xmlMapper.readValue(new File("config.xml"), Config.class);
+			return xmlMapper.readValue(new File(configPath), Config.class);
 		} catch (Exception e) {
 			// Nếu có lỗi xảy ra (ví dụ: file không tồn tại, định dạng XML sai)
 			// Gửi email thông báo lỗi với tiêu đề và nội dung chi tiết lỗi

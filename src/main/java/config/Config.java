@@ -8,5 +8,5 @@ public class Config {
 	public Database database;
 	public Source source;
 	public Extract extract;
-	public String email;
+	public Email email;
 }
