@@ -9,16 +9,18 @@ import java.util.*;
 
 public class TransformValidator {
 
+    private static final String DB_NAME = "staging";
+
     // Hàm gọi ngoài: validate toàn bộ schema cần cho transform
-    public boolean validateAll(Connection connection) {
-        try (connection) {
-            if (connection == null) {
+    public boolean validateAll() {
+        try (Connection conn = DataBase.connectDB("localhost", 3306, "root", "1234", DB_NAME)) {
+            if (conn == null) {
                 System.out.println("❌ Không kết nối được DB staging để validate");
                 return false;
             }
 
-            boolean tempOk = validateTempTable(connection);
-            boolean officialOk = validateOfficialTable(connection);
+            boolean tempOk = validateTempTable(conn);
+            boolean officialOk = validateOfficialTable(conn);
 
             if (tempOk && officialOk) {
                 System.out.println("✅ Transform Ready (TR): Schema staging OK");
@@ -62,7 +64,7 @@ public class TransformValidator {
         String sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " +
                 "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?";
         PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setString(1, "staging");
+        ps.setString(1, DB_NAME);
         ps.setString(2, tableName);
         ResultSet rs = ps.executeQuery();
 
