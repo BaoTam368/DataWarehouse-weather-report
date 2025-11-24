@@ -27,7 +27,6 @@ public class MartValidator {
             ok &= validateMartWeatherSummary(martConn);
 
         } catch (Exception e) {
-            e.printStackTrace();
             ok = false;
         }
 

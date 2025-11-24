@@ -16,7 +16,7 @@ public class AggregateDumpProcess {
     /**
      * Dump bảng AggregateWeatherDaily -> file CSV
      *
-     * @param sourceId  nguồn dữ liệu (config_source.source_id)
+     * @param sourceId   nguồn dữ liệu (config_source.source_id)
      * @param outputPath đường dẫn file CSV muốn xuất (ví dụ: "D:/DW/aggregate/aggregate_daily.csv")
      */
     public void dumpAggregateToCsv(int sourceId, String outputPath) {
