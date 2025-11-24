@@ -52,8 +52,8 @@ WHERE NOT EXISTS (
     SELECT newrow.Direction, newrow.Speed
     FROM (
     SELECT DISTINCT
-        TRIM(SUBSTRING_INDEX(s.Wind, ' ', 1)) AS Direction,
-        REPLACE(SUBSTRING_INDEX(TRIM(s.Wind), ' ', -2), 'km/h', '') + 0 as Speed
+        s.WindDirection AS Direction,
+        s.WindSpeed + 0 AS Speed
     FROM staging.stg_weather_clean s
     ) AS newrow
     ON DUPLICATE KEY UPDATE
@@ -96,7 +96,7 @@ SELECT
 FROM (
     SELECT
         d.SK,
-        -- Day phải lấy từ staging (stg_weather_clean):
+        -- Day phải lấy từ STAGING:
         DAY(STR_TO_DATE(s.FullDate,'%Y-%m-%d %H:%i:%s')) AS Day,
         w.WindKey,
         u.UVKey,
@@ -111,8 +111,8 @@ FROM (
     JOIN datawarehouse.date_dim d
         ON d.DateOnly = DATE(STR_TO_DATE(s.FullDate,'%Y-%m-%d %H:%i:%s'))
     JOIN datawarehouse.DimWind w
-        ON w.Direction = TRIM(SUBSTRING_INDEX(s.Wind, ' ', 1))
-      AND w.Speed = REPLACE(SUBSTRING_INDEX(TRIM(s.Wind),' ',-2),'km/h','') + 0
+        ON w.Direction = s.WindDirection
+        AND w.Speed = s.WindSpeed + 0
 
     JOIN datawarehouse.DimUV u
         ON u.UVValue = SUBSTRING_INDEX(TRIM(s.UVValue), ' ', 1) + 0
@@ -136,3 +136,4 @@ ON DUPLICATE KEY UPDATE
     TRUNCATE TABLE staging.stg_weather;
     TRUNCATE TABLE staging.stg_weather_clean;
 end;
+
