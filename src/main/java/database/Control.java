@@ -12,17 +12,15 @@ public class Control {
 			int record, double size, String status, Timestamp executeTime) {
 		try {
 			String sql = "INSERT INTO file_log "
-					+ "(source_id, file_path, time,count, size, status, execute_time) "
-					+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+					+ "(source_id, file_path, time, size, status, execute_time) "
+					+ "VALUES (?, ?, ?, ?,  ?, ?)";
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setInt(1, srcId); // Nguồn dữ liệu
 			ps.setString(2, srcFileLocation); // Đường dẫn file
 			ps.setTimestamp(3, time);
-			ps.setString(4, format); // format cua file
-			ps.setInt(5, record); // Số bản ghi
-			ps.setDouble(6, size); // Kích thước file
-			ps.setString(7, status); // Trạng thái
-			ps.setTimestamp(8, executeTime); // Thời điểm kết thúc
+			ps.setDouble(4, size); // Kích thước file
+			ps.setString(5, status); // Trạng thái
+			ps.setTimestamp(6, executeTime); // Thời điểm kết thúc
 			ps.executeUpdate();
 			System.out.println("Đã ghi file_log quá trình vào control.");
 		} catch (SQLException e) {
@@ -90,8 +88,8 @@ public class Control {
 			String fileFormat, String aggregateFilePath, String loadMartScriptPath) {
 		try {
 			String sql = "INSERT INTO config_mart "
-					+ "(username, remote_host, password, file_format, aggregate_file_path, load_mart_script_path) "
-					+ "VALUES (?, ?, ?, ?, ?, ?)";
+					+ "(username, remote_host, password,  aggregate_file_path, load_mart_script_path) "
+					+ "VALUES (?, ?, ?, ?, ?)";
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setString(1, username);
 			ps.setString(2, remoteHost);
