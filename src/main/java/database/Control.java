@@ -86,7 +86,7 @@ public class Control {
     }
 
     public static void insertConfigMart(Connection conn, String username, String remoteHost, String password,
-                                        String fileFormat, String aggregateFilePath, String loadMartScriptPath) {
+                                        String aggregateFilePath, String loadMartScriptPath) {
         try {
             String sql = "INSERT INTO config_mart "
                     + "(username, remote_host, passwword, aggregate_file_path, load_mart_script_path) "
