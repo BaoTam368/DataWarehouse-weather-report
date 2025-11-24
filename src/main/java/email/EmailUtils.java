@@ -6,7 +6,7 @@ import java.util.Properties;
 
 public class EmailUtils {
 
-    private static final String ADMIN_EMAIL = "23130286@st.hcmuaf.edu.vn";
+    private static final String ADMIN_EMAIL = "23130068@st.hcmuaf.edu.vn";
     private static final String USERNAME = "?";       // email gửi
     private static final String PASSWORD = "?";          // mật khẩu hoặc app password
 
@@ -38,5 +38,3 @@ public class EmailUtils {
         }
     }
 }
-
-
