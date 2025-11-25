@@ -1,7 +1,6 @@
-package process.dumpAggreagate;
+package process.dumpAggregate;
 
 import database.Control;
-import database.DataBase;
 import email.EmailUtils;
 
 import java.io.BufferedWriter;

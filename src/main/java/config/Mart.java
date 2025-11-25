@@ -7,6 +7,6 @@ import java.util.List;
 
 public class Mart {
     @JacksonXmlElementWrapper(useWrapping = false)
-    @JacksonXmlProperty(localName = "scripts")
+    @JacksonXmlProperty(localName = "script")
     public List<String> scripts;
 }

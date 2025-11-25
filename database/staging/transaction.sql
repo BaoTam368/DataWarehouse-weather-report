@@ -1,41 +1,39 @@
-INSERT INTO staging.stg_weather_clean (
-    FullDate, Weekday, Day,
-    Temperature, UVValue, UVLevel,
-    WindDirection, WindSpeed,
-    Humidity, DewPoint, Pressure,
-    CloudCover, Visibility, CloudCeiling
-)
+USE staging;
 
+TRUNCATE TABLE official;
+
+INSERT INTO official
+(FullDate, Weekday, `Day`,
+ Temperature, UVValue, UVLevel, WindDirection, WindSpeed,
+ Humidity, DewPoint, Pressure, Cloud,
+ Visibility, CloudCeiling)
 SELECT
-    STR_TO_DATE(FullDate, '%Y-%m-%d %H:%i:%s') AS FullDate,
+    STR_TO_DATE(FullDate, '%Y-%m-%d %H:%i:%s'),
+
     Weekday,
-    CONCAT(
-        DAY(STR_TO_DATE(FullDate, '%Y-%m-%d %H:%i:%s')),
-        ' tháng ',
-        MONTH(STR_TO_DATE(FullDate, '%Y-%m-%d %H:%i:%s'))
-    ) AS Day,
+    `Day`,
 
-    -- Temperature numeric
-    REGEXP_SUBSTR(Temperature, '[0-9.]+') AS Temperature,
+    -- Temperature
+    CAST(REGEXP_SUBSTR(Temperature, '[0-9]+(\\.[0-9]+)?') AS DECIMAL(5,2)),
 
-    -- UV numeric part: before the first space
-    LEFT(UVValue, LOCATE(' ', UVValue) - 1) AS UVValue,
+    -- UVValue (số)
+    CAST(REGEXP_SUBSTR(UVValue, '[0-9]+(\\.[0-9]+)?') AS DECIMAL(4,2)),
 
-    -- UV level (inside parentheses) – NO lookbehind
-    TRIM(BOTH ')' FROM SUBSTRING_INDEX(UVValue, '(', -1)) AS UVLevel,
+    -- UVLevel (text sau số)
+    TRIM(
+            REGEXP_REPLACE(UVValue, '^[0-9]+(\\.[0-9]+)?\\s*', '')
+    ),
 
-    -- Wind direction = first word (letters)
-    SUBSTRING_INDEX(Wind, ' ', 1) AS WindDirection,
+    -- Wind
+    SUBSTRING_INDEX(WindDirection, ' ', 1),
+    CAST(REGEXP_SUBSTR(WindDirection, '[0-9]+(\\.[0-9]+)?') AS DECIMAL(5,2)),
 
-    -- Wind speed = number
-    REGEXP_SUBSTR(Wind, '[0-9.]+') AS WindSpeed,
-
-    REGEXP_SUBSTR(Humidity, '[0-9.]+') AS Humidity,
-    REGEXP_SUBSTR(DewPoint, '[0-9.]+') AS DewPoint,
-    REGEXP_SUBSTR(Pressure, '[0-9.]+') AS Pressure,
-    REGEXP_SUBSTR(CloudCover, '[0-9.]+') AS CloudCover,
-    REGEXP_SUBSTR(Visibility, '[0-9.]+') AS Visibility,
-    REGEXP_SUBSTR(CloudCeiling, '[0-9.]+') AS CloudCeiling
-
-FROM staging.stg_weather
+    -- Other numeric fields
+    CAST(REGEXP_SUBSTR(Humidity, '[0-9]+') AS DECIMAL(5,2)),
+    CAST(REGEXP_SUBSTR(DewPoint, '[0-9]+') AS DECIMAL(5,2)),
+    CAST(REGEXP_SUBSTR(Pressure, '[0-9]+') AS DECIMAL(6,2)),
+    CAST(REGEXP_SUBSTR(Cloud, '[0-9]+') AS DECIMAL(5,2)),
+    CAST(REGEXP_SUBSTR(Visibility, '[0-9]+') AS DECIMAL(5,2)),
+    CAST(REGEXP_SUBSTR(CloudCeiling, '[0-9]+') AS SIGNED)
+FROM temp
 WHERE STR_TO_DATE(FullDate, '%Y-%m-%d %H:%i:%s') IS NOT NULL;

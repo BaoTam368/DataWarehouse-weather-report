@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Transaction {
     @JacksonXmlElementWrapper(useWrapping = false)
-    @JacksonXmlProperty(localName = "scripts")
+    @JacksonXmlProperty(localName = "script")
     public List<String> scripts;
 
 }
