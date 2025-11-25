@@ -43,6 +43,10 @@ public class TransformProcess {
 
         } catch (Exception e) {
             System.out.println("Lỗi chung khi chạy Transform: " + e.getMessage());
+            EmailUtils.send(
+                    "Lỗi Transform dữ liệu staging",
+                    "Source ID: " + sourceId + "\nChi tiết: " + e.getMessage()
+            );
             e.printStackTrace();
         } finally {
             closeQuietly(stagingConn);
@@ -74,12 +78,12 @@ public class TransformProcess {
         } catch (Exception ex) {
             stagingConn.rollback();
             System.out.println("Transform thất bại! Chi tiết: " + ex.getMessage());
-            ex.printStackTrace();
 
             EmailUtils.send(
                     "Lỗi Transform dữ liệu staging",
                     "Source ID: " + sourceId + "\nChi tiết: " + ex.getMessage()
             );
+            ex.printStackTrace();
             return false;
         }
     }

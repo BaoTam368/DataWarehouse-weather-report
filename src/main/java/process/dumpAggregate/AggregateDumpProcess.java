@@ -59,7 +59,13 @@ public class AggregateDumpProcess {
         } catch (Exception e) {
             System.out.println("Dump aggregate -> CSV thất bại!");
             System.out.println("Chi tiết lỗi khi dump file: " + e.getMessage());
+
+            EmailUtils.send(
+                    "Lỗi dump AggregateWeatherDaily ra CSV",
+                    "Source ID: " + sourceId + "\nChi tiết: " + e.getMessage()
+            );
         }
+
 
         // 2. Ghi log
         Timestamp endTime = Timestamp.valueOf(LocalDateTime.now());

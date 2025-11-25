@@ -60,6 +60,10 @@ public class AggregateProcess {
 
         } catch (Exception e) {
             System.out.println("Lỗi chung khi chạy Aggregate: " + e.getMessage());
+            EmailUtils.send(
+                    "Lỗi load dữ liệu sang aggregate table",
+                    "Source ID: " + sourceId + "\nChi tiết: " + e.getMessage()
+            );
             e.printStackTrace();
         }
     }

@@ -43,6 +43,10 @@ public class MartProcess {
 
         } catch (Exception e) {
             System.out.println("Lỗi chung khi chạy MartProcess: " + e.getMessage());
+            EmailUtils.send(
+                    "Lỗi load dữ liệu sang mart",
+                    "Source ID: " + sourceId + "\nChi tiết: " + e.getMessage()
+            );
         } finally {
             closeQuietly(martConn);
             closeQuietly(warehouseConn);
@@ -97,7 +101,7 @@ public class MartProcess {
                     "Lỗi load dữ liệu sang mart",
                     "Source ID: " + sourceId + "\nChi tiết: " + ex.getMessage()
             );
-
+            ex.printStackTrace();
             return false;
         }
     }
