@@ -30,7 +30,7 @@
     <email>23130116@st.hcmuaf.edu.vn</email>
 
     <warehouse>
-        <script>database/warehouse/proc_load_warehouse.sql</script>
+        <script>D:/DW/DataWarehouse/database/warehouse/proc_load_warehouse.sql</script>
         <procName>proc_load_warehouse</procName>
     </warehouse>
 

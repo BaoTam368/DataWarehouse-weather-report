@@ -12,14 +12,24 @@ public class Main {
     public static void main(String[] args) {
 
         try {
-            // Load config.xml (để lấy script)
+            if (args.length == 0) {
+                System.out.println("❌ Thiếu đường dẫn config.xml");
+                return;
+            }
+
+            String configPath = args[0];
+
             XmlMapper mapper = new XmlMapper();
-            Config cfg = mapper.readValue(new File("config.xml"), Config.class);
+            Config cfg = mapper.readValue(new File(configPath), Config.class);
 
             // Connect DB
-            Connection controlConn = DBConnection.connectDB("localhost", 3306, "root", "123456", "control");
-            Connection warehouseConn = DBConnection.connectDB("localhost", 3306, "root", "123456", "datawarehouse");
-            Connection stagingConn = DBConnection.connectDB("localhost", 3306, "root", "123456", "staging");
+            String host = cfg.database.host;
+            int port = cfg.database.port;
+            String user = cfg.database.user;
+            String password = cfg.database.password;
+            Connection controlConn = DBConnection.connectDB(host, port, user, password, "control");
+            Connection warehouseConn = DBConnection.connectDB(host, port, user, password, "datawarehouse");
+            Connection stagingConn = DBConnection.connectDB(host, port, user, password, "staging");
 
             // Run load warehouse
             LoadWarehouseProcess loader = new LoadWarehouseProcess(cfg);

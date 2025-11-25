@@ -26,9 +26,14 @@ public class Test {
 		XmlMapper mapper = new XmlMapper();
 		Config cfg = mapper.readValue(new File("config.xml"), Config.class);
 
-		Connection controlConn = DBConnection.connectDB("localhost", 3306, "root", "123456", "control");
-		Connection warehouseConn = DBConnection.connectDB("localhost", 3306, "root", "123456", "datawarehouse");
-		Connection stagingConn = DBConnection.connectDB("localhost", 3306, "root", "123456", "staging");
+		// Connect DB
+		String host = cfg.database.host;
+		int port = cfg.database.port;
+		String user = cfg.database.user;
+		String password = cfg.database.password;
+		Connection controlConn = DBConnection.connectDB(host, port, user, password, "control");
+		Connection warehouseConn = DBConnection.connectDB(host, port, user, password, "datawarehouse");
+		Connection stagingConn = DBConnection.connectDB(host, port, user, password, "staging");
 
 
 		//EXTRACT
@@ -40,7 +45,8 @@ public class Test {
 
 		Scraper.writeToCSV(data, fileName);
 		//LOAD CSV
-		loadCsvToStaging.load(fileName);
+		loadCsvToStaging.load("D:/DW/Datawarehouse/data/weather_log (1) (1).csv");
+
 		//TRANSFORM
 		int sourceId = cfg.source.source_id;
 		List<String> paths = cfg.transaction.scripts;
