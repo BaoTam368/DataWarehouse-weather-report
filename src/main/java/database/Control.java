@@ -89,7 +89,7 @@ public class Control {
 			String fileFormat, String aggregateFilePath, String loadMartScriptPath) {
 		try {
 			String sql = "INSERT INTO config_mart "
-					+ "(username, remote_host, passwword, file_format, aggregate_file_path, load_mart_script_path) "
+					+ "(username, remote_host, password, file_format, aggregate_file_path, load_mart_script_path) "
 					+ "VALUES (?, ?, ?, ?, ?, ?)";
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setString(1, username);
