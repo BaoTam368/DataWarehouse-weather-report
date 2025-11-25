@@ -3,7 +3,6 @@ package web;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.gson.Gson;
 import config.Config;
-import database.DataBase;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -23,7 +22,7 @@ public class WeatherServlet extends HttpServlet {
 
         System.out.println("👉 [WeatherServlet] doGet() called");
 
-        // 1. Đọc config.xml từ classpath (src/main/resources)
+        // 1. Đọc config.xml từ classpath (src/main/resources/config.xml)
         Config config;
         try (InputStream is = Thread.currentThread()
                 .getContextClassLoader()
@@ -60,20 +59,23 @@ public class WeatherServlet extends HttpServlet {
 
         String sql = """
                 SELECT DateOnly, AvgTemp, MinTemp, MaxTemp, TempCategory
-                FROM WeatherDailySummary
+                FROM weatherdailysummary
                 ORDER BY DateOnly
                 """;
 
-        // 3. Query mart_weather
-        try (Connection conn = DataBase.connectDB(host, port, user, password, "mart_weather")) {
-            if (conn == null) {
-                System.err.println("❌ [WeatherServlet] Cannot connect to DB");
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                resp.getWriter().write("{\"error\":\"Cannot connect to database\"}");
-                return;
-            }
+        // 3. Tự connect MySQL tới mart_weather (KHÔNG dùng DataBase.connectDB)
+        String url = String.format(
+                "jdbc:mysql://%s:%d/mart_weather?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC",
+                host, port
+        );
+        System.out.println("👉 [WeatherServlet] JDBC URL = " + url);
 
-            try (PreparedStatement st = conn.prepareStatement(sql);
+        try {
+            // Đảm bảo driver MySQL được load (thường không cần, nhưng cho chắc)
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            try (Connection conn = DriverManager.getConnection(url, user, password);
+                 PreparedStatement st = conn.prepareStatement(sql);
                  ResultSet rs = st.executeQuery()) {
 
                 while (rs.next()) {
