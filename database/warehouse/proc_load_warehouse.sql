@@ -1,5 +1,3 @@
-use datawarehouse;
-
 CREATE procedure proc_load_warehouse()
 begin
 
@@ -19,7 +17,7 @@ FROM (
         MONTH(STR_TO_DATE(s.FullDate,'%Y-%m-%d %H:%i:%s')) AS Month,
         YEAR(STR_TO_DATE(s.FullDate,'%Y-%m-%d %H:%i:%s')) AS Year,
         DAYNAME(STR_TO_DATE(s.FullDate,'%Y-%m-%d %H:%i:%s')) AS Weekday
-    FROM staging.official s
+    FROM staging.stg_weather_clean s
 ) AS newrow
 ON DUPLICATE KEY UPDATE
     Weekday = newrow.Weekday;
@@ -54,7 +52,7 @@ WHERE NOT EXISTS (
     SELECT DISTINCT
         s.WindDirection AS Direction,
         s.WindSpeed + 0 AS Speed
-    FROM staging.official s
+    FROM staging.stg_weather_clean s
     ) AS newrow
     ON DUPLICATE KEY UPDATE
     Speed = newrow.Speed;
@@ -66,9 +64,10 @@ WHERE NOT EXISTS (
     SELECT newrow.UVValue, newrow.UVLevel
     FROM (
     SELECT DISTINCT
-        SUBSTRING_INDEX(TRIM(s.UVValue), ' ', 1) + 0 AS UVValue,
-        TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(s.UVValue,'(', -1), ')', 1)) AS UVLevel
-    FROM staging.official s
+        CAST(TRIM(SUBSTRING_INDEX(s.UVValue, '(', 1)) AS DECIMAL(3,1)) AS UVValue,
+        TRIM(BOTH ')' FROM SUBSTRING_INDEX(s.UVValue, '(', -1)) AS UVLevel
+
+    FROM staging.stg_weather_clean s
     ) AS newrow
     ON DUPLICATE KEY UPDATE
     UVLevel = newrow.UVLevel;
@@ -96,18 +95,19 @@ SELECT
 FROM (
     SELECT
         d.SK,
-        -- Day phải lấy từ STAGING:
-        DAY(STR_TO_DATE(s.FullDate,'%Y-%m-%d %H:%i:%s')) AS Day,
+        CONCAT(d.Day, ' tháng ', d.Month) AS Day,
+
+
         w.WindKey,
         u.UVKey,
         CAST(REGEXP_REPLACE(s.Temperature, '[^0-9.-]', '') AS DECIMAL(4,1)) AS Temperature,
         CAST(REGEXP_REPLACE(s.Humidity, '[^0-9.-]', '') AS DECIMAL(4,1)) AS Humidity,
         CAST(REGEXP_REPLACE(s.DewPoint, '[^0-9.-]', '') AS DECIMAL(4,1)) AS DewPoint,
         CAST(REGEXP_REPLACE(s.Pressure, '[^0-9.-]', '') AS DECIMAL(6,2)) AS Pressure,
-        CAST(REGEXP_REPLACE(s.Cloud, '[^0-9.-]', '') AS DECIMAL(5,2)) AS CloudCover,
+        CAST(REGEXP_REPLACE(s.CloudCover, '[^0-9.-]', '') AS DECIMAL(5,2)) AS CloudCover,
         CAST(REGEXP_REPLACE(s.Visibility, '[^0-9.-]', '') AS DECIMAL(5,2)) AS Visibility,
         CAST(REGEXP_REPLACE(s.CloudCeiling, '[^0-9.-]', '') AS SIGNED) AS CloudCeiling
-    FROM staging.official s
+    FROM staging.stg_weather_clean s
     JOIN datawarehouse.date_dim d
         ON d.DateOnly = DATE(STR_TO_DATE(s.FullDate,'%Y-%m-%d %H:%i:%s'))
     JOIN datawarehouse.DimWind w
@@ -115,8 +115,9 @@ FROM (
         AND w.Speed = s.WindSpeed + 0
 
     JOIN datawarehouse.DimUV u
-        ON u.UVValue = SUBSTRING_INDEX(TRIM(s.UVValue), ' ', 1) + 0
-      AND u.UVLevel = TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(s.UVValue,'(', -1), ')', 1))
+    ON u.UVValue = CAST(TRIM(SUBSTRING_INDEX(s.UVValue, '(', 1)) AS DECIMAL(3,1))
+    AND u.UVLevel = TRIM(BOTH ')' FROM SUBSTRING_INDEX(s.UVValue, '(', -1))
+
 ) AS newrow
 ON DUPLICATE KEY UPDATE
     Day          = newrow.Day,
@@ -133,6 +134,7 @@ ON DUPLICATE KEY UPDATE
     -- =====================================
     -- 6 CLEAN STAGING
     -- =====================================
-    TRUNCATE TABLE staging.temp;
-    TRUNCATE TABLE staging.official;
+    TRUNCATE TABLE staging.stg_weather;
+    TRUNCATE TABLE staging.stg_weather_clean;
 end;
+

@@ -122,36 +122,36 @@ public class Scraper {
 
 			// Gán giá trị vào đúng trường của đối tượng WeatherData dựa trên tên field
 			switch (field) {
-			case "dayDate":
-				data.dayDate = value;
-				break;
-			case "temperature":
-				data.temperature = value;
-				break;
-			case "uvIndex":
-				data.uvIndex = value;
-				break;
-			case "wind":
-				data.wind = value;
-				break;
-			case "humidity":
-				data.humidity = value;
-				break;
-			case "dewPoint":
-				data.dewPoint = value;
-				break;
-			case "pressure":
-				data.pressure = value;
-				break;
-			case "cloudCover":
-				data.cloudCover = value;
-				break;
-			case "visibility":
-				data.visibility = value;
-				break;
-			case "ceiling":
-				data.ceiling = value;
-				break;
+				case "dayDate":
+					data.dayDate = value;
+					break;
+				case "temperature":
+					data.temperature = value;
+					break;
+				case "uvIndex":
+					data.uvIndex = value;
+					break;
+				case "wind":
+					data.wind = value;
+					break;
+				case "humidity":
+					data.humidity = value;
+					break;
+				case "dewPoint":
+					data.dewPoint = value;
+					break;
+				case "pressure":
+					data.pressure = value;
+					break;
+				case "cloudCover":
+					data.cloudCover = value;
+					break;
+				case "visibility":
+					data.visibility = value;
+					break;
+				case "ceiling":
+					data.ceiling = value;
+					break;
 			}
 		}
 
@@ -189,7 +189,7 @@ public class Scraper {
 
 			// Ghi header của file CSV
 			pw.println(
-					"FullDate,WeekDay,Day,Temperature,UVValue,WindDirection,Humidity,DewPoint,Pressure,CloudCover,Visibility,CloudCeiling");
+					"FullDate,WeekDay,Day,Temperature,UVValue,WindDirection,Humidity,DewPoint,Pressure,Cloud,Visibility,CloudCeiling");
 
 			// Ghi dữ liệu thời tiết theo định dạng CSV
 			pw.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s%n", data.time, data.dayDate, data.temperature, data.uvIndex,
