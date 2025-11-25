@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body style="padding: 40px">
+
+<h2>📊 Weather Data from Data Mart</h2>
+<canvas id="chart" width="900" height="300"></canvas>
+
+<script>
+    // Gọi tương đối: /{contextPath}/api/weather
+    fetch("api/weather")
+        .then(function (res) {
+            console.log("👉 HTTP status:", res.status);
+            if (!res.ok) {
+                throw new Error("HTTP " + res.status);
+            }
+            return res.json();
+        })
+        .then(function (data) {
+            console.log("👉 API data:", data);
+
+            const labels = data.map(x => x.date);
+            const avg = data.map(x => x.avg);
+            const min = data.map(x => x.min);
+            const max = data.map(x => x.max);
+
+            const ctx = document.getElementById("chart");
+
+            new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: "Avg Temp", data: avg, borderWidth: 2 },
+                        { label: "Min Temp", data: min, borderWidth: 2 },
+                        { label: "Max Temp", data: max, borderWidth: 2 }
+                    ]
+                }
+            });
+        })
+        .catch(function (err) {
+            console.error("❌ Fetch error:", err);
+        });
+</script>
+</body>
+</html>

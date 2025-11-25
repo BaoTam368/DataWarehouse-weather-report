@@ -67,6 +67,8 @@ logs/
 # Environment files
 .env
 *.properties
+.smarttomcat
+Document.docx
 
 # Test reports and coverage
 target/surefire-reports/

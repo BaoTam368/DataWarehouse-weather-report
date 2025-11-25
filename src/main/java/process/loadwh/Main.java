@@ -14,7 +14,7 @@ public class Main {
         try {
             // Load config.xml (để lấy script)
             XmlMapper mapper = new XmlMapper();
-            Config config = mapper.readValue(new File("config.xml"), Config.class);
+            Config config = mapper.readValue(new File("src/main/resources/config.xml"), Config.class);
 
             // Connect DB
             String host = config.database.host;

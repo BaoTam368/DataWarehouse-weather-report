@@ -11,7 +11,7 @@ import java.sql.Connection;
 public class Main {
     public static void main(String[] args) throws IOException {
         XmlMapper xmlMapper = new XmlMapper();
-        Config config = xmlMapper.readValue(new File("config.xml"), Config.class);
+        Config config = xmlMapper.readValue(new File("src/main/resources/config.xml"), Config.class);
         String outputPath = "data/dump_aggregate/aggregate_daily.csv";
 
         // Kết nối database

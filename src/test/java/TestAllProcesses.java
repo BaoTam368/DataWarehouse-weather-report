@@ -9,18 +9,6 @@ public class TestAllProcesses {
 
         try {
             System.out.println("========== BẮT ĐẦU TEST TOÀN BỘ ETL ==========\n");
-
-            // ====== Load config ======
-            XmlMapper mapper = new XmlMapper();
-            Config config = mapper.readValue(new File("config.xml"), Config.class);
-
-            String host = config.database.host;
-            int port = config.database.port;
-            String user = config.database.user;
-            String password = config.database.password;
-
-            int sourceId = config.source.source_id;
-
             // =====================================================================
             // 1️⃣ LOAD CSV → STAGING.TEMP
             // =====================================================================

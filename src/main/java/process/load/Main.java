@@ -25,7 +25,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
 
         XmlMapper xmlMapper = new XmlMapper();
-        Config config = xmlMapper.readValue(new File("config.xml"), Config.class);
+        Config config = xmlMapper.readValue(new File("src/main/resources/config.xml"), Config.class);
 
         // Kết nối database
         String host = config.database.host;
