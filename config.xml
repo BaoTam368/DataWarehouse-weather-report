@@ -35,8 +35,4 @@
     </warehouse>
 
 
-    <countSql>
-        <path>database/warehouse/count_tables.sql</path>
-    </countSql>
-
 </config>
