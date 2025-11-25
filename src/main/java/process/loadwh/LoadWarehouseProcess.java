@@ -3,13 +3,7 @@ package process.loadwh;
 import config.Config;
 import database.Control;
 import email.EmailUtils;
-import org.apache.ibatis.jdbc.ScriptRunner;
-
-import java.io.FileReader;
-import java.io.Reader;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.Timestamp;
+import java.sql.*;
 
 public class LoadWarehouseProcess {
 
@@ -38,8 +32,7 @@ public class LoadWarehouseProcess {
                 warehouseConn,
                 stagingConn,
                 "proc_load_warehouse",
-                cfg.warehouse.script,
-                cfg.countSql != null ? cfg.countSql.path : null
+                cfg.warehouse.script
         );
 
         if (!ready) {
@@ -72,14 +65,13 @@ public class LoadWarehouseProcess {
 
 
             //COUNT DIM/FACT
-            int total = 0;
-            if (cfg.countSql != null) {
-                total = runCountSql(warehouseConn, cfg.countSql.path);
+            int total = countTotalDimFact(warehouseConn);
+            System.out.println("📊 Tổng số DIM + FACT: " + total);
 
-                System.out.println("📊 Tổng số DIM + FACT: " + total);
-            }
 
+            //COMMIT
             warehouseConn.commit();
+
             // SUCCESS
             Control.insertFileLog(
                     controlConn,
@@ -112,14 +104,6 @@ public class LoadWarehouseProcess {
             ex.printStackTrace();
         }
     }
-//    private void runSqlFile_JDBC(Connection conn, String path) throws Exception {
-//        String sql = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path)));
-//
-//        try (java.sql.Statement stmt = conn.createStatement()) {
-//            stmt.execute(sql);
-//        }
-//    }
-
 
 
     private void callProcedure(Connection conn, String procName) throws Exception {
@@ -129,19 +113,24 @@ public class LoadWarehouseProcess {
         }
     }
 
-    private int runCountSql(Connection conn, String path) throws Exception {
-        ScriptRunner r = new ScriptRunner(conn);
+    private int countTotalDimFact(Connection conn) throws Exception {
+        String[] tables = {"DimTime", "DimWind", "DimUV", "FactWeather"};
+        int total = 0;
 
-        CountSqlWriter writer = new CountSqlWriter();
+        for (String tbl : tables) {
+            String sql = "SELECT COUNT(*) AS total FROM " + tbl;
 
-        r.setLogWriter(writer);   // <-- giờ đã đúng kiểu PrintWriter
-        r.setErrorLogWriter(writer);
+            try (PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
 
-        r.setSendFullScript(true);
-
-        try (Reader rd = new FileReader(path)) {
-            r.runScript(rd);
+                if (rs.next()) {
+                    int cnt = rs.getInt("total");
+                    System.out.println("📌 " + tbl + " = " + cnt);
+                    total += cnt;
+                }
+            }
         }
-        return writer.getTotal();
+        return total;
     }
+
 }

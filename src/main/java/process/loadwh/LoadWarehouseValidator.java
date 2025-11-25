@@ -12,8 +12,7 @@ public class LoadWarehouseValidator {
             Connection warehouseConn,
             Connection stagingConn,
             String procName,
-            String warehouseScript,
-            String countSqlScript) {
+            String warehouseScript) {
 
         try {
 
@@ -25,7 +24,7 @@ public class LoadWarehouseValidator {
 
             boolean procOk = checkProcedureExists(warehouseConn, procName);
             boolean tablesOk = validateDimFactTables(warehouseConn);
-            boolean fileOk = validateFiles(warehouseScript, countSqlScript);
+            boolean fileOk = validateFiles(warehouseScript);
             boolean stagingOk = checkStagingHasRows(stagingConn);
 
             if (procOk && tablesOk && fileOk && stagingOk) {
