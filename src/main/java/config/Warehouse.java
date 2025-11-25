@@ -1,12 +1,9 @@
 package config;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
-import java.util.List;
-
 public class Warehouse {
-    @JacksonXmlElementWrapper(useWrapping = false)
     @JacksonXmlProperty(localName = "script")
-    public List<String> scripts;
+    public String script;
+    public String procName;
 }
