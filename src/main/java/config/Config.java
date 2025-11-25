@@ -13,6 +13,6 @@ public class Config {
     public Mart mart;
     public String email;
     public Warehouse warehouse;
-    public CountSql countSql;
+
 
 }
