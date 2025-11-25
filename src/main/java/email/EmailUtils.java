@@ -6,11 +6,11 @@ import java.util.Properties;
 
 public class EmailUtils {
 
-    private static final String ADMIN_EMAIL = "23130116@st.hcmuaf.edu.vn";
-    private static final String USERNAME = "baotam.testing.system@gmail.com";       // email gửi
-    private static final String PASSWORD = "epzm sdfa jhkh yobh";          // mật khẩu hoặc app password
+    private static final String ADMIN_EMAIL = "23130068@st.hcmuaf.edu.vn";
+    private static final String USERNAME = "?";       // email gửi
+    private static final String PASSWORD = "?";          // mật khẩu hoặc app password
 
-    // Hàm gửi mail
+    // Hàm gửi mail 
     public static void send(String subject, String body) {
         try {
             Properties props = new Properties();
@@ -37,9 +37,4 @@ public class EmailUtils {
             e.printStackTrace();
         }
     }
-    public static void main(String[] args) {
-
-        EmailUtils.send("Test", "Xin chào, hệ thống đã gửi mail thành công!");
-    }
 }
-

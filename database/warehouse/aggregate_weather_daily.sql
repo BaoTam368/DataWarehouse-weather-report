@@ -1,7 +1,7 @@
 USE warehouse;
 
 -- Tạo bảng AggregateWeatherDaily: Để
-CREATE TABLE IF NOT EXISTS AggregateWeatherDaily
+CREATE TABLE IF NOT EXISTS aggregate_weather_daily
 (
     DateOnly    DATE PRIMARY KEY,
     AvgTemp     DECIMAL(5, 2),
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS AggregateWeatherDaily
     RowCount    INT
 );
 
-REPLACE INTO AggregateWeatherDaily
+REPLACE INTO aggregate_weather_daily
 SELECT dt.DateOnly,
        ROUND(AVG(f.Temperature), 2) AS AvgTemp,
        ROUND(MIN(f.Temperature), 2) AS MinTemp,

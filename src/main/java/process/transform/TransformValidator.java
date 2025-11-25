@@ -1,6 +1,5 @@
 package process.transform;
 
-import database.DBConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,18 +8,16 @@ import java.util.*;
 
 public class TransformValidator {
 
-    private static final String DB_NAME = "staging";
-
     // Hàm gọi ngoài: validate toàn bộ schema cần cho transform
-    public boolean validateAll() {
-        try (Connection conn = DBConnection.connectDB("localhost", 3306, "root", "123456", DB_NAME)) {
-            if (conn == null) {
-                System.out.println("❌ Không kết nối được DB staging để validate");
-                return false;
-            }
+    public boolean validateAll(Connection stagingConn) {
+        if (stagingConn == null) {
+            System.out.println("❌ Không kết nối được DB staging để validate");
+            return false;
+        }
 
-            boolean tempOk = validateTempTable(conn);
-            boolean officialOk = validateOfficialTable(conn);
+        try {
+            boolean tempOk = validateTempTable(stagingConn);
+            boolean officialOk = validateOfficialTable(stagingConn);
 
             if (tempOk && officialOk) {
                 System.out.println("✅ Transform Ready (TR): Schema staging OK");
@@ -31,7 +28,8 @@ public class TransformValidator {
             }
 
         } catch (Exception e) {
-            System.out.println("❌ Lỗi khi validate schema");
+            System.out.println("❌ Lỗi khi validate schema: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -41,21 +39,21 @@ public class TransformValidator {
     private boolean validateTempTable(Connection conn) throws Exception {
         List<String> requiredCols = Arrays.asList(
                 "FullDate", "Weekday", "Day",
-                "Temperature", "UVValue", "Wind",
+                "Temperature", "UVValue", "WindDirection",
                 "Humidity", "DewPoint", "Pressure",
-                "CloudCover", "Visibility", "CloudCeiling"
+                "Cloud", "Visibility", "CloudCeiling"
         );
-        return validateColumns(conn, "stg_weather", requiredCols);
+        return validateColumns(conn, "temp", requiredCols);
     }
 
     private boolean validateOfficialTable(Connection conn) throws Exception {
         List<String> requiredCols = Arrays.asList(
                 "FullDate", "Weekday", "Day",
-                "Temperature", "UVValue","UVLevel", "WindDirection", "WindSpeed",
-                "Humidity", "DewPoint", "Pressure", "CloudCover",
+                "Temperature", "UVValue", "WindDirection", "WindSpeed",
+                "Humidity", "DewPoint", "Pressure", "Cloud",
                 "Visibility", "CloudCeiling"
         );
-        return validateColumns(conn, "stg_weather_clean", requiredCols);
+        return validateColumns(conn, "official", requiredCols);
     }
 
     // --- hàm generic: kiểm tra 1 bảng có đủ các cột required hay không ---
@@ -64,7 +62,7 @@ public class TransformValidator {
         String sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " +
                 "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?";
         PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setString(1, DB_NAME);
+        ps.setString(1, "staging");
         ps.setString(2, tableName);
         ResultSet rs = ps.executeQuery();
 

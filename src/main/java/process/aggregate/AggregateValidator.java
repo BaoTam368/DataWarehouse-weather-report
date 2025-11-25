@@ -1,6 +1,6 @@
 package process.aggregate;
 
-import database.DBConnection;
+import database.DataBase;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,16 +11,16 @@ public class AggregateValidator {
 
     private static final String DB_NAME = "warehouse";
 
-    public boolean validateAll() {
-        try (Connection conn = DBConnection.connectDB("localhost", 3306, "root", "123456", DB_NAME)) {
-            if (conn == null) {
+    public boolean validateAll(Connection warehouseConn) {
+        try (warehouseConn) {
+            if (warehouseConn == null) {
                 System.out.println("❌ Không kết nối được DB warehouse để validate");
                 return false;
             }
 
-            boolean factOk = validateFactWeather(conn);
-            boolean dimOk = validateDimTime(conn);
-            boolean aggOk = validateAggregateTable(conn);
+            boolean factOk = validateFactWeather(warehouseConn);
+            boolean dimOk = validateDimTime(warehouseConn);
+            boolean aggOk = validateAggregateTable(warehouseConn);
 
             if (factOk && dimOk && aggOk) {
                 System.out.println("✅ Aggregate Ready (AR): Schema warehouse OK");

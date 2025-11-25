@@ -1,6 +1,6 @@
 package process.mart;
 
-import database.DBConnection;
+import database.DataBase;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,29 +10,27 @@ import java.util.*;
 public class MartValidator {
 
     private static final String DB_MART = "mart_weather";
-    private static final String DB_WAREHOUSE = "datawarehouse";
+    private static final String DB_WAREHOUSE = "warehouse";
 
-    public boolean validateAll() {
+    public boolean validateAll(Connection martConn, Connection warehouseConn) {
         boolean ok = true;
 
-        try (Connection martConn = DBConnection.connectDB("localhost", 3306, "root", "123456", DB_MART);
-             Connection WarehouseConn   = DBConnection.connectDB("localhost", 3306, "root", "123456", DB_WAREHOUSE)) {
+        try (martConn; warehouseConn) {
 
-            if (martConn == null || WarehouseConn == null) {
-                System.out.println("❌ Không kết nối được DB mart_weather hoặc datawarehouse để validate");
+            if (martConn == null || warehouseConn == null) {
+                System.out.println("❌ Không kết nối được DB mart_weather hoặc warehouse để validate");
                 return false;
             }
 
-            ok &= validateWarehouseAggregate(WarehouseConn);
+            ok &= validateWarehouseAggregate(martConn);
             ok &= validateMartWeatherSummary(martConn);
 
         } catch (Exception e) {
-            e.printStackTrace();
             ok = false;
         }
 
         if (ok) {
-            System.out.println("✅ Mart Ready (MR): Schema datawarehouse + mart_weather OK");
+            System.out.println("✅ Mart Ready (MR): Schema warehouse + mart_weather OK");
         } else {
             System.out.println("❌ Mart NOT Ready: thiếu cột/bảng.");
         }

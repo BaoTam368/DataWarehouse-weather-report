@@ -12,18 +12,18 @@ import database.*;
 public class MainExtract {
 	// Phương thức kiểm tra xem dữ liệu có sẵn sàng để thực hiện bước Extract hay không
 	public static boolean checkExtract(Config config, Document doc) throws Exception {
-		// Kiểm tra các điều kiện cần thiết để extract dữ liệu:
-		// 1. URL của nguồn dữ liệu có thể truy cập được
-		// 2. Thư mục lưu trữ dữ liệu nguồn tồn tại và hợp lệ
-		// 3. Các selector trong tài liệu HTML hợp lệ và tồn tại
-		if (Scraper.checkURL(config.source.source_url)
-				&& Scraper.checkPath(config.source.source_folder_path)
-				&& Scraper.checkAllSelectors(doc)) {
-			return true; // Nếu tất cả điều kiện đều đúng, trả về true
-		}
-
-		// Nếu bất kỳ điều kiện nào không thỏa, trả về false
-		return false;
+	    // Kiểm tra các điều kiện cần thiết để extract dữ liệu:
+	    // 1. URL của nguồn dữ liệu có thể truy cập được
+	    // 2. Thư mục lưu trữ dữ liệu nguồn tồn tại và hợp lệ
+	    // 3. Các selector trong tài liệu HTML hợp lệ và tồn tại
+	    if (Scraper.checkURL(config.source.source_url) 
+	        && Scraper.checkPath(config.source.source_folder_path)
+	        && Scraper.checkAllSelectors(doc)) {
+	        return true; // Nếu tất cả điều kiện đều đúng, trả về true
+	    }
+	    
+	    // Nếu bất kỳ điều kiện nào không thỏa, trả về false
+	    return false;
 	}
 
 

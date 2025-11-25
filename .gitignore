@@ -141,6 +141,7 @@ Desktop.ini
 # Logs
 logs/
 *.log
+Document.docx
 
 # Environment files
 .env

@@ -4,35 +4,35 @@
         <host>localhost</host>
         <port>3306</port>
         <user>root</user>
-        <password>123456</password>
+        <password>1234</password>
     </database>
 
     <source>
         <source_id>1</source_id>
         <source_name>AccuWeather</source_name>
         <source_url>https://www.accuweather.com/vi/vn/ho-chi-minh-city/353981/current-weather/353981?unit=c</source_url>
-        <source_folder_path>data</source_folder_path>
+        <source_folder_path>\data</source_folder_path>
         <file_format>csv</file_format>
     </source>
 
+    <extract>
+        <scraping_script_path>\src\main\java\extract\Scraper.java</scraping_script_path>
+        <process_name>extract</process_name>
+    </extract>
+
     <transaction>
-        <scripts>database/staging/transaction.sql</scripts>
+        <script>database/staging/transaction.sql</script>
     </transaction>
 
     <aggregate>
-        <scripts>database/warehouse/aggregate_weather_daily.sql</scripts>
+        <script>database/warehouse/aggregate_weather_daily.sql</script>
     </aggregate>
 
     <mart>
-        <scripts>database/mart/mart_weather_daily_load.sql</scripts>
+        <script>database/mart/mart_weather_daily_load.sql</script>
     </mart>
 
-    <email>23130116@st.hcmuaf.edu.vn</email>
 
-    <warehouse>
-        <script>database/warehouse/proc_load_warehouse.sql</script>
-        <procName>proc_load_warehouse</procName>
-    </warehouse>
-
+    <email>23130286@st.hcmuaf.edu.vn</email>
 
 </config>
