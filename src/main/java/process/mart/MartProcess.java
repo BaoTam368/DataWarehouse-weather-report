@@ -1,7 +1,7 @@
 package process.mart;
 
 import database.Control;
-import database.DataBase;
+import email.EmailUtils;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
@@ -13,87 +13,123 @@ import java.util.List;
 
 public class MartProcess {
 
-    public void runMart(int sourceId, List<String> martSqlPath, Connection martConn,
-                        Connection warehouseConn, Connection controlConn) {
-        // Thời điểm bắt đầu run
-        Timestamp validateStart = new Timestamp(System.currentTimeMillis());
-        boolean success = false;
+    public void runMart(int sourceId, List<String> martSqlPath,
+                        Connection martConn, Connection warehouseConn, Connection controlConn) {
 
-        try (
-                martConn; controlConn
-        ) {
-            // Kiểm tra kết nối database
-            if (martConn == null || controlConn == null) {
-                System.out.println("Kết nối DB mart_weather/control thất bại!");
+        Timestamp validateStart = new Timestamp(System.currentTimeMillis());
+        boolean success;
+
+        try {
+            if (martConn == null || warehouseConn == null || controlConn == null) {
+                System.out.println("Kết nối mart/warehouse/control thất bại!");
                 return;
             }
 
-            // 1. VALIDATE SCHEMA -> MR (Mart Ready)
-            boolean ready = isReady(sourceId, martConn, controlConn, warehouseConn, validateStart);
-
+            // 1. VALIDATE SCHEMA -> MR
+            boolean ready = isReady(sourceId, martConn, warehouseConn, controlConn, validateStart);
             if (!ready) {
                 System.out.println("Schema không đúng, dừng load mart.");
                 return;
             }
 
-            // 2. THỰC HIỆN LOAD MART -> LM (Load Mart)
-            // Tắt auto commit để có thể rollback tránh hỏng schema do từng phần trong script chạy lẻ
+            // 2. LOAD MART -> LM
             martConn.setAutoCommit(false);
             Timestamp loadStart = new Timestamp(System.currentTimeMillis());
 
-            success = isSuccess(martSqlPath, martConn, success);
+            success = isSuccess(martSqlPath, martConn, sourceId);
 
-            // Thời điểm kết thúc run
             Timestamp loadEnd = new Timestamp(System.currentTimeMillis());
-
-            extracted(sourceId, controlConn, success, loadStart, loadEnd);
+            writeLoadLog(sourceId, controlConn, success, loadStart, loadEnd);
 
         } catch (Exception e) {
-            System.out.println("Lỗi chung khi chạy MartProcess!");
+            System.out.println("Lỗi chung khi chạy MartProcess: " + e.getMessage());
+            EmailUtils.send(
+                    "Lỗi load dữ liệu sang mart",
+                    "Source ID: " + sourceId + "\nChi tiết: " + e.getMessage()
+            );
+        } finally {
+            closeQuietly(martConn);
+            closeQuietly(warehouseConn);
+            closeQuietly(controlConn);
         }
     }
 
-    private static void extracted(int sourceId, Connection controlConn, boolean success, Timestamp loadStart, Timestamp loadEnd) {
+    /**
+     * Ghi log cho bước load mart (LM).
+     *
+     * @param sourceId    Nguồn dữ liệu (config_source.source_id)
+     * @param controlConn Kết nối DB control
+     * @param success     Trạng thái của quá trình load mart
+     * @param loadStart   Thời điểm bắt đầu load mart
+     * @param loadEnd     Thời điểm kết thúc load mart
+     */
+    private static void writeLoadLog(int sourceId, Connection controlConn,
+                                     boolean success, Timestamp loadStart, Timestamp loadEnd) {
+
         Control.insertProcessLog(
                 controlConn,
                 sourceId,
-                "LM",                               // Load Mart
-                "Load dữ liệu vào mart_weather",    // process_name
+                "LM",
+                "Load dữ liệu vào mart_weather",
                 success ? "SC" : "F",
                 loadStart,
                 loadEnd
         );
     }
 
-    private boolean isSuccess(List<String> martSqlPath, Connection martConn, boolean success) throws SQLException {
+    /**
+     * Thực hiện danh sách script .sql để load dữ liệu vào martWeather
+     *
+     * @param martSqlPath danh sách các file .sql cần chạy trong quá trình load mart
+     * @param martConn    kết nối DB mart
+     * @return true nếu load mart thành công, false ngược lại
+     * @throws SQLException nếu có lỗi khi thực thi các file .sql
+     */
+    private boolean isSuccess(List<String> martSqlPath, Connection martConn, int sourceId) throws SQLException {
         try {
             for (String path : martSqlPath) {
                 executeSqlScript(martConn, path);
             }
             martConn.commit();
-            success = true;
             System.out.println("Load mart thành công!");
+            return true;
         } catch (Exception ex) {
             martConn.rollback();
-            System.out.println("Load mart thất bại!");
-            System.out.println("Chi tiết lỗi khi load mart: " + ex.getMessage());
+            System.out.println("Load mart thất bại! Chi tiết: " + ex.getMessage());
+
+            EmailUtils.send(
+                    "Lỗi load dữ liệu sang mart",
+                    "Source ID: " + sourceId + "\nChi tiết: " + ex.getMessage()
+            );
+            ex.printStackTrace();
+            return false;
         }
-        return success;
     }
 
-    private static boolean isReady(int sourceId, Connection martConn, Connection warehouse, Connection controlConn,
-                                   Timestamp validateStart) {
+    /**
+     * Check if mart is ready to load data.
+     *
+     * @param sourceId      Nguồn dữ liệu (config_source.source_id)
+     * @param martConn      kết nối DB mart
+     * @param warehouseConn kết nối DB datawarehouse
+     * @param controlConn   kết nối DB control
+     * @param validateStart Thời điểm bắt đầu validate
+     * @return true nếu mart đã sẵn sàng, false ngược lại
+     */
+    private static boolean isReady(int sourceId, Connection martConn, Connection warehouseConn,
+                                   Connection controlConn, Timestamp validateStart) {
+
         MartValidator validator = new MartValidator();
-        boolean ready = validator.validateAll(martConn, warehouse);
+        boolean ready = validator.validateAll(martConn, warehouseConn);
 
         Timestamp validateEnd = new Timestamp(System.currentTimeMillis());
 
         Control.insertProcessLog(
                 controlConn,
                 sourceId,
-                "MR",                               // Mart Ready
-                "Validate schema before load mart", // process_name
-                ready ? "SC" : "F",                 // SC = success, F = fail
+                "MR",
+                "Validate schema before load mart",
+                ready ? "SC" : "F",
                 validateStart,
                 validateEnd
         );
@@ -108,6 +144,13 @@ public class MartProcess {
 
         try (Reader reader = new FileReader(filePath)) {
             runner.runScript(reader);
+        }
+    }
+
+    private void closeQuietly(Connection conn) {
+        try {
+            if (conn != null) conn.close();
+        } catch (Exception ignored) {
         }
     }
 }

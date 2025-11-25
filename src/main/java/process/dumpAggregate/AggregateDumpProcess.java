@@ -1,7 +1,7 @@
-package process.dumpAggreagate;
+package process.dumpAggregate;
 
 import database.Control;
-import database.DataBase;
+import email.EmailUtils;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -59,7 +59,13 @@ public class AggregateDumpProcess {
         } catch (Exception e) {
             System.out.println("Dump aggregate -> CSV thất bại!");
             System.out.println("Chi tiết lỗi khi dump file: " + e.getMessage());
+
+            EmailUtils.send(
+                    "Lỗi dump AggregateWeatherDaily ra CSV",
+                    "Source ID: " + sourceId + "\nChi tiết: " + e.getMessage()
+            );
         }
+
 
         // 2. Ghi log
         Timestamp endTime = Timestamp.valueOf(LocalDateTime.now());
@@ -85,28 +91,40 @@ public class AggregateDumpProcess {
                 return;
             }
 
-            Control.insertFileLog(
-                    controlConn,
-                    sourceId,
-                    outputPath,
-                    startTime,
-                    sizeBytes,       // size
-                    success ? "SC" : "F",
-                    endTime
-            );
+            fileLog(controlConn, sourceId, outputPath, startTime, sizeBytes, success, endTime);
+            processLog(controlConn, sourceId, startTime, success, endTime);
 
-            Control.insertProcessLog(
-                    controlConn,
-                    sourceId,
-                    "DP", // DUMP AGGREGATE
-                    "Dump AggregateWeatherDaily to CSV",
-                    success ? "SC" : "F",
-                    startTime,
-                    endTime
-            );
         } catch (Exception e) {
             System.out.println("Ghi log cho dump aggregate thất bại!");
+            EmailUtils.send(
+                    "Lỗi khi dump aggregate file",
+                    "Source ID: " + sourceId + "\nChi tiết: " + e.getMessage()
+            );
         }
+    }
+
+    private static void processLog(Connection controlConn, int sourceId, Timestamp startTime, boolean success, Timestamp endTime) {
+        Control.insertProcessLog(
+                controlConn,
+                sourceId,
+                "DP", // DUMP AGGREGATE
+                "Dump AggregateWeatherDaily to CSV",
+                success ? "SC" : "F",
+                startTime,
+                endTime
+        );
+    }
+
+    private static void fileLog(Connection controlConn, int sourceId, String outputPath, Timestamp startTime, double sizeBytes, boolean success, Timestamp endTime) {
+        Control.insertFileLog(
+                controlConn,
+                sourceId,
+                outputPath,
+                startTime,
+                sizeBytes,       // size
+                success ? "SC" : "F",
+                endTime
+        );
     }
 
     /**

@@ -5,9 +5,8 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 import java.util.List;
 
-public class Transaction {
+public class Warehouse {
     @JacksonXmlElementWrapper(useWrapping = false)
     @JacksonXmlProperty(localName = "script")
     public List<String> scripts;
-
 }
