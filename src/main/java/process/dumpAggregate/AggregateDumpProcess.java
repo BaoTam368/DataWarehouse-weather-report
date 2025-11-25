@@ -23,8 +23,8 @@ public class AggregateDumpProcess {
     public void dumpAggregateToCsv(int sourceId, String outputPath, Connection warehouseConn, Connection controlConn) {
         // Thời gian bắt đầu
         Timestamp startTime = Timestamp.valueOf(LocalDateTime.now());
-        boolean success = false;
-        long sizeBytes = 0;
+        boolean success;
+        long sizeBytes;
 
         Path out = Path.of(outputPath);
 
@@ -58,12 +58,12 @@ public class AggregateDumpProcess {
 
         } catch (Exception e) {
             System.out.println("Dump aggregate -> CSV thất bại!");
-            System.out.println("Chi tiết lỗi khi dump file: " + e.getMessage());
 
             EmailUtils.send(
                     "Lỗi dump AggregateWeatherDaily ra CSV",
                     "Source ID: " + sourceId + "\nChi tiết: " + e.getMessage()
             );
+            throw new RuntimeException("Lỗi dump AggregateWeatherDaily ra CSV: " + e.getMessage());
         }
 
 
@@ -100,6 +100,7 @@ public class AggregateDumpProcess {
                     "Lỗi khi dump aggregate file",
                     "Source ID: " + sourceId + "\nChi tiết: " + e.getMessage()
             );
+            throw new RuntimeException("Lỗi khi dump aggregate file: " + e.getMessage());
         }
     }
 

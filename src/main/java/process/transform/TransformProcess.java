@@ -21,15 +21,14 @@ public class TransformProcess {
 
         try {
             if (stagingConn == null || controlConn == null) {
-                System.out.println("Kết nối DB staging/control thất bại");
-                return;
+                throw new RuntimeException("Kết nối DB staging/control thất bại");
             }
 
             // 1. VALIDATE -> TR
             boolean ready = isReady(sourceId, stagingConn, controlConn, validateStart);
             if (!ready) {
                 System.out.println("Schema không đúng, dừng Transform.");
-                return;
+                throw new RuntimeException("Schema không đúng, dừng Transform.");
             }
 
             // 2. RUN TRANSFORM -> TO
@@ -42,12 +41,12 @@ public class TransformProcess {
             writeTransformLog(sourceId, controlConn, success, transformStart, transformEnd);
 
         } catch (Exception e) {
-            System.out.println("Lỗi chung khi chạy Transform: " + e.getMessage());
             EmailUtils.send(
                     "Lỗi Transform dữ liệu staging",
                     "Source ID: " + sourceId + "\nChi tiết: " + e.getMessage()
             );
             e.printStackTrace();
+            throw new RuntimeException("Lỗi chung khi chạy Transform: " + e.getMessage());
         } finally {
             closeQuietly(stagingConn);
             closeQuietly(controlConn);
@@ -84,7 +83,7 @@ public class TransformProcess {
                     "Source ID: " + sourceId + "\nChi tiết: " + ex.getMessage()
             );
             ex.printStackTrace();
-            return false;
+            throw new RuntimeException("Transform  thất bại", ex);
         }
     }
 
@@ -123,6 +122,7 @@ public class TransformProcess {
     private void closeQuietly(Connection conn) {
         try {
             if (conn != null) conn.close();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 }

@@ -35,16 +35,14 @@ public class AggregateProcess {
         try (warehouseConn; controlConn) {
             // Kiểm tra kết nối database
             if (warehouseConn == null || controlConn == null) {
-                System.out.println("Kết nối DB warehouse/control thất bại!");
-                return;
+                throw new RuntimeException("Kết nối DB warehouse/control thất bại!");
             }
 
             // 1. VALIDATE SCHEMA -> process_code = AR
             boolean ready = isReady(sourceId, warehouseConn, controlConn, validateStart);
 
             if (!ready) {
-                System.out.println("Schema warehouse không đúng, dừng Aggregate.");
-                return;
+                throw new RuntimeException("Schema warehouse không đúng, dừng Aggregate.");
             }
 
             // 2. THỰC HIỆN AGGREGATE -> process_code = AO
@@ -59,12 +57,12 @@ public class AggregateProcess {
             extracted(sourceId, controlConn, success, aggregateStart, aggregateEnd);
 
         } catch (Exception e) {
-            System.out.println("Lỗi chung khi chạy Aggregate: " + e.getMessage());
             EmailUtils.send(
                     "Lỗi load dữ liệu sang aggregate table",
                     "Source ID: " + sourceId + "\nChi tiết: " + e.getMessage()
             );
             e.printStackTrace();
+            throw new RuntimeException("Lỗi chung khi chạy Aggregate: " + e.getMessage());
         }
     }
 
@@ -114,14 +112,12 @@ public class AggregateProcess {
             System.out.println("Aggregate weather daily thành công!");
         } catch (Exception ex) {
             warehouseConn.rollback();
-            System.out.println("Aggregate weather daily thất bại!");
-            System.out.println("Chi tiết lỗi khi aggregate: " + ex.getMessage());
-
             EmailUtils.send(
                     "Lỗi load dữ liệu sang aggregate table",
                     "Source ID: " + sourceId + "\nChi tiết: " + ex.getMessage()
             );
             ex.printStackTrace();
+            throw new RuntimeException("Lỗi chung khi chạy Aggregate: " + ex.getMessage());
         }
         return success;
     }

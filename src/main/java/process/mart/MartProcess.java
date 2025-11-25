@@ -21,15 +21,13 @@ public class MartProcess {
 
         try {
             if (martConn == null || warehouseConn == null || controlConn == null) {
-                System.out.println("Kết nối mart/warehouse/control thất bại!");
-                return;
+                throw new RuntimeException("Kết nối mart/warehouse/control thất bại!");
             }
 
             // 1. VALIDATE SCHEMA -> MR
             boolean ready = isReady(sourceId, martConn, warehouseConn, controlConn, validateStart);
             if (!ready) {
-                System.out.println("Schema không đúng, dừng load mart.");
-                return;
+                throw new RuntimeException("Schema không đúng, dừng load mart.");
             }
 
             // 2. LOAD MART -> LM
@@ -47,6 +45,7 @@ public class MartProcess {
                     "Lỗi load dữ liệu sang mart",
                     "Source ID: " + sourceId + "\nChi tiết: " + e.getMessage()
             );
+            throw new RuntimeException("Lỗi chung khi chạy MartProcess: " + e.getMessage());
         } finally {
             closeQuietly(martConn);
             closeQuietly(warehouseConn);
@@ -102,7 +101,7 @@ public class MartProcess {
                     "Source ID: " + sourceId + "\nChi tiết: " + ex.getMessage()
             );
             ex.printStackTrace();
-            return false;
+            throw new RuntimeException("Load mart thất bại! Chi tiết: " + ex.getMessage());
         }
     }
 

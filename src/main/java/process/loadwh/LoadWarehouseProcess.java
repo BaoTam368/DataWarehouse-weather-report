@@ -36,7 +36,6 @@ public class LoadWarehouseProcess {
         );
 
         if (!ready) {
-            System.out.println("❌ Load không đủ điều kiện.");
             Control.insertFileLog(
                     controlConn,
                     sourceId,
@@ -45,7 +44,7 @@ public class LoadWarehouseProcess {
                     0,
                     "F",
                     new Timestamp(System.currentTimeMillis()));
-            return;
+            throw new RuntimeException("Load không đủ điều kiện.");
         }
 
         // 3. LOG LO
@@ -102,6 +101,7 @@ public class LoadWarehouseProcess {
                     new Timestamp(System.currentTimeMillis()));
 
             ex.printStackTrace();
+            throw new RuntimeException("Lỗi chung khi chạy LoadWarehouse: " + ex.getMessage());
         }
     }
 
