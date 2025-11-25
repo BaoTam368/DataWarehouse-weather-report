@@ -1,8 +1,6 @@
 use datawarehouse;
--- SET FOREIGN_KEY_CHECKS = 0;
--- DROP TABLE date_dim;
--- SET FOREIGN_KEY_CHECKS = 1;
--- truncate table date_dim;
+
+
 CREATE TABLE date_dim (
     SK INT AUTO_INCREMENT PRIMARY KEY,
     DateOnly DATE NOT null UNIQUE,
@@ -13,12 +11,11 @@ CREATE TABLE date_dim (
 );
 
 CREATE TABLE DimTime (
-    TimeKey INT auto_increment PRIMARY KEY,
-    FullDate DATETIME,
+    FullDate DATETIME NOT NULL UNIQUE,
     Day INT,
     Month INT,
     Year INT,
-    Weekday NVARCHAR(20)
+    Weekday VARCHAR(20)
 );
 
 CREATE TABLE DimWind (
@@ -33,9 +30,10 @@ CREATE TABLE DimUV (
     UVLevel NVARCHAR(20)               
 );
 
+
 CREATE TABLE datawarehouse.FactWeather (
     SK INT PRIMARY KEY,
-    Day INT,
+    Day VARCHAR(50),
     WindKey INT,
     UVKey INT,
     Temperature DECIMAL(4,1),
@@ -49,14 +47,5 @@ CREATE TABLE datawarehouse.FactWeather (
     FOREIGN KEY (WindKey) REFERENCES datawarehouse.DimWind(WindKey),
     FOREIGN KEY (UVKey) REFERENCES datawarehouse.DimUV(UVKey)
 );
-
-
-
-
-
-
-
-
-
 
 

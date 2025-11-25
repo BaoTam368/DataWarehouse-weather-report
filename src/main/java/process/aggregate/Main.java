@@ -5,6 +5,7 @@ import config.Config;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -12,7 +13,10 @@ public class Main {
         Config config = xmlMapper.readValue(new File("config.xml"), Config.class);
 
         // Gọi process aggregate
+        int sourceId = config.source.source_id;
+        List<String> paths = config.aggregate.scripts;
+
         AggregateProcess process = new AggregateProcess();
-        process.runAggregate(config.aggregate.scripts);
+        process.runAggregate(sourceId, paths);
     }
 }

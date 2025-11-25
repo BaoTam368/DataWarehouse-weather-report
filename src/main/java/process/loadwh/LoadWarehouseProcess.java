@@ -1,240 +1,147 @@
 package process.loadwh;
 
+import config.Config;
 import database.Control;
-import database.DBConnection;
+import email.EmailUtils;
+import org.apache.ibatis.jdbc.ScriptRunner;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.FileReader;
+import java.io.Reader;
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.Timestamp;
-
 
 public class LoadWarehouseProcess {
 
-    private static final String COUNT_SQL_PATH = "D:\\DW\\DataWarehouse\\database\\warehouse\\count_tables.sql";
+    private final Config cfg;
 
-    // hàm lấy source_id từ db.control
-    public int getSourceIdByName(String sourceName) {
-        int id = -1;
-
-        try (Connection conn = DBConnection.connectDB(
-                "localhost", 3306, "root", "123456", "control")) {
-
-            if (conn == null) {
-                System.out.println("❌ Không kết nối được DB control");
-                return -1;
-            }
-
-            String sql = "SELECT source_id FROM config_source WHERE source_name = ? LIMIT 1";
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, sourceName);
-                var rs = ps.executeQuery();
-
-                if (rs.next()) {
-                    id = rs.getInt("source_id");
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return id;
+    public LoadWarehouseProcess(Config cfg) {
+        this.cfg = cfg;
     }
 
+    public void runLoadWarehouse(Connection controlConn, Connection warehouseConn, Connection stagingConn) {
 
-    public void runLoadWarehouse(String sourceName) {
+        int sourceId = cfg.source.source_id;
+        Timestamp startTime = new Timestamp(System.currentTimeMillis());
 
-        // Lấy source_id từ database
-        int source_id = getSourceIdByName(sourceName);
-        if (source_id == -1) {
-            System.out.println("Không tìm thấy source_id cho source: " + sourceName);
+        // 1. LOG LR
+        Control.insertProcessLog(controlConn, sourceId,
+                "LOAD_WH",
+                "LoadToWarehouse",
+                "LR",
+                startTime,
+                startTime);
+
+        // 2. VALIDATE
+        LoadWarehouseValidator validator = new LoadWarehouseValidator();
+        boolean ready = validator.validateAll(
+                warehouseConn,
+                stagingConn,
+                "proc_load_warehouse",
+                cfg.warehouse.script,
+                cfg.countSql != null ? cfg.countSql.path : null
+        );
+
+        if (!ready) {
+            System.out.println("❌ Load không đủ điều kiện.");
+            Control.insertFileLog(
+                    controlConn,
+                    sourceId,
+                    "LOAD_WH",
+                    startTime,
+                    0,
+                    "F",
+                    new Timestamp(System.currentTimeMillis()));
             return;
         }
 
-        long startMillis = System.currentTimeMillis();
-        Timestamp startTime = new Timestamp(startMillis);
+        // 3. LOG LO
+        Control.insertProcessLog(
+                controlConn,
+                sourceId,
+                "LOAD_WH",
+                "LoadToWarehouse",
+                "LO",
+                startTime, new Timestamp(System.currentTimeMillis()));
 
-        // 1.Kết nối tới DB control
-        try (Connection controlConn = DBConnection.connectDB(
-                "localhost", 3306, "root", "123456", "control")) {
+        try {
+            warehouseConn.setAutoCommit(false);
 
-            if (controlConn == null) {
-                System.out.println("❌ KHÔNG kết nối được tới DB control!");
-                return;
+            //CALL PROCEDURE LOAD DỮ LIỆU
+            callProcedure(warehouseConn, cfg.warehouse.procName);
+
+
+            //COUNT DIM/FACT
+            int total = 0;
+            if (cfg.countSql != null) {
+                total = runCountSql(warehouseConn, cfg.countSql.path);
+
+                System.out.println("📊 Tổng số DIM + FACT: " + total);
             }
 
-            // ghi log Load Ready (LR)
-            Control.insertProcessLog(
+            warehouseConn.commit();
+            // SUCCESS
+            Control.insertFileLog(
                     controlConn,
-                    source_id,
-                    "proc_load_warehouse",
-                    "LoadToWarehouse",
-                    "LR",
+                    sourceId,
+                    "LOAD_WH",
                     startTime,
-                    startTime
-            );
+                    total,
+                    "SC",
+                    new Timestamp(System.currentTimeMillis()));
 
-            // 2. Ket noi DB warehouse
-            try (Connection WarehouseConn = DBConnection.connectDB(
-                    "localhost", 3306, "root", "123456", "datawarehouse")) {
-
-                if (WarehouseConn == null) {
-                System.out.println("❌ Không thể kết nối DB datawarehouse!");
-
-                Timestamp endTime = new Timestamp(System.currentTimeMillis());
-
-                    Control.insertFileLog(
-                            controlConn,
-                            source_id,
-                            "count_tables.sql",
-                            startTime,
-                            0,
-                            "LF",
-                            endTime
-                    );
-                return;
-            }
-                WarehouseConn.setAutoCommit(false);
-
-            System.out.println("🔗 Kết nối thành công vào DB datawarehouse.");
-
-            // goi log Load Ongoing (LO)
-                Control.insertProcessLog(
-                        controlConn,
-                        source_id,
-                        "proc_load_warehouse",
-                        "LoadToWarehouse",
-                        "LO",
-                        startTime,
-                        new Timestamp(System.currentTimeMillis())
-                );
-
-            // 3. Chạy PROC LOAD WAREHOUSE
-            callProcedure(WarehouseConn, "proc_load_warehouse");
-            WarehouseConn.commit();
-            System.out.println("✔ Chạy proc_load_warehouse thành công.");
-
-            // 4. Chạy count_tables.sql để lấy số lượng DIM + FACT
-                String countSummary = runSqlFileForSelect(WarehouseConn,COUNT_SQL_PATH);
-
-                System.out.println("📊 DIM + FACT SUMMARY:");
-                System.out.println(countSummary);
-
-                Timestamp endTime = new Timestamp(System.currentTimeMillis());
-
-                //SUCCESS
-                int totalSize = parseTotalCount(countSummary);
-                Control.insertFileLog(
-                        controlConn,
-                        source_id,
-                        "count_tables.sql",
-                        startTime,
-                        totalSize,
-                        "SC",           // SUCCESS
-                        endTime
-                );
-
-                System.out.println("✔ LoadToWarehouse — ghi log thành công!");
-
-            } catch (Exception ex) {
-
-                Timestamp endTime = new Timestamp(System.currentTimeMillis());
-
-                //FAIL
-                Control.insertFileLog(
-                        controlConn,
-                        source_id,
-                        "count_tables.sql",
-                        startTime,
-                        0,
-                        "LF",
-                        endTime
-                );
-
-                System.out.println("❌ LoadToWarehouse thất bại!");
-                ex.printStackTrace();
-            }
+            System.out.println("🎉 LoadToWarehouse hoàn tất!");
 
         } catch (Exception ex) {
-            System.out.println("❌ Lỗi kết nối tới control DB");
+            try { warehouseConn.rollback();
+            } catch (Exception ignored) {
+            }
+
+            EmailUtils.send("❌ Lỗi LoadWarehouse", ex.getMessage());
+
+            // FAILED
+            Control.insertFileLog(
+                    controlConn,
+                    sourceId,
+                    "LOAD_WH",
+                    startTime,
+                    0,
+                    "F",
+                    new Timestamp(System.currentTimeMillis()));
+
             ex.printStackTrace();
         }
     }
+//    private void runSqlFile_JDBC(Connection conn, String path) throws Exception {
+//        String sql = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path)));
+//
+//        try (java.sql.Statement stmt = conn.createStatement()) {
+//            stmt.execute(sql);
+//        }
+//    }
 
-    //
-    private int parseTotalCount(String countSummary) {
-        if (countSummary == null || countSummary.isBlank()) return 0;
 
-        int total = 0;
 
-        // Tách theo dòng
-        String[] lines = countSummary.split("\n");
-
-        for (String line : lines) {
-            line = line.trim();
-
-            if (line.isEmpty()) continue;
-
-            // Tìm dấu '='
-            int idx = line.indexOf("=");
-
-            if (idx != -1 && idx + 1 < line.length()) {
-                try {
-                    // Lấy phần sau dấu '=' và trim
-                    int value = Integer.parseInt(line.substring(idx + 1).trim());
-                    total += value;
-                } catch (NumberFormatException e) {
-                    System.out.println("⚠ Không parse được số từ dòng: " + line);
-                }
-            }
-        }
-
-        return total;
-    }
-
-    // 5. GỌI STORED PROCEDURE
-    private void callProcedure(Connection WarehouseConn, String procName) throws Exception {
+    private void callProcedure(Connection conn, String procName) throws Exception {
         String sql = "{CALL " + procName + "()}";
-        try (CallableStatement stmt = WarehouseConn.prepareCall(sql)) {
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.execute();
         }
     }
 
-    // 6. CHẠY FILE SQL count_tables.sql COUNT DIM + FACT
-    private String runSqlFileForSelect(Connection conn, String sqlFile) {
-        StringBuilder log = new StringBuilder();
+    private int runCountSql(Connection conn, String path) throws Exception {
+        ScriptRunner r = new ScriptRunner(conn);
 
-        try {
-            String sql = new String(Files.readAllBytes(Paths.get(sqlFile)));
-            String[] queries = sql.split(";");
+        CountSqlWriter writer = new CountSqlWriter();
 
-            for (String q : queries) {
-                q = q.trim();
-                if (q.isEmpty()) continue;
+        r.setLogWriter(writer);   // <-- giờ đã đúng kiểu PrintWriter
+        r.setErrorLogWriter(writer);
 
-                try (PreparedStatement ps = conn.prepareStatement(q)) {
-                    var rs = ps.executeQuery();
-                    while (rs.next()) {
-                        String table = rs.getString("table_name");
-                        int total = rs.getInt("total");
+        r.setSendFullScript(true);
 
-                        log.append(table)
-                                .append(" = ")
-                                .append(total)
-                                .append("\n");
-                    }
-                }
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "ERROR: " + e.getMessage();
+        try (Reader rd = new FileReader(path)) {
+            r.runScript(rd);
         }
-
-        return log.toString();
+        return writer.getTotal();
     }
-
-
 }

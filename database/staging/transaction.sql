@@ -22,7 +22,7 @@ SELECT
     LEFT(UVValue, LOCATE(' ', UVValue) - 1) AS UVValue,
 
     -- UV level (inside parentheses) – NO lookbehind
-    TRIM(BOTH '()' FROM SUBSTRING_INDEX(UVValue, '(', -1)) AS UVLevel,
+    TRIM(BOTH ')' FROM SUBSTRING_INDEX(UVValue, '(', -1)) AS UVLevel,
 
     -- Wind direction = first word (letters)
     SUBSTRING_INDEX(Wind, ' ', 1) AS WindDirection,

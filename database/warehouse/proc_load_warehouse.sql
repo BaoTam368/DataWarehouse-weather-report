@@ -1,5 +1,3 @@
-use datawarehouse;
-
 CREATE procedure proc_load_warehouse()
 begin
 
@@ -66,8 +64,9 @@ WHERE NOT EXISTS (
     SELECT newrow.UVValue, newrow.UVLevel
     FROM (
     SELECT DISTINCT
-        SUBSTRING_INDEX(TRIM(s.UVValue), ' ', 1) + 0 AS UVValue,
-        TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(s.UVValue,'(', -1), ')', 1)) AS UVLevel
+        CAST(TRIM(SUBSTRING_INDEX(s.UVValue, '(', 1)) AS DECIMAL(3,1)) AS UVValue,
+        TRIM(BOTH ')' FROM SUBSTRING_INDEX(s.UVValue, '(', -1)) AS UVLevel
+
     FROM staging.stg_weather_clean s
     ) AS newrow
     ON DUPLICATE KEY UPDATE
@@ -96,8 +95,9 @@ SELECT
 FROM (
     SELECT
         d.SK,
-        -- Day phải lấy từ STAGING:
-        DAY(STR_TO_DATE(s.FullDate,'%Y-%m-%d %H:%i:%s')) AS Day,
+        CONCAT(d.Day, ' tháng ', d.Month) AS Day,
+
+
         w.WindKey,
         u.UVKey,
         CAST(REGEXP_REPLACE(s.Temperature, '[^0-9.-]', '') AS DECIMAL(4,1)) AS Temperature,
@@ -115,8 +115,9 @@ FROM (
         AND w.Speed = s.WindSpeed + 0
 
     JOIN datawarehouse.DimUV u
-        ON u.UVValue = SUBSTRING_INDEX(TRIM(s.UVValue), ' ', 1) + 0
-      AND u.UVLevel = TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(s.UVValue,'(', -1), ')', 1))
+    ON u.UVValue = CAST(TRIM(SUBSTRING_INDEX(s.UVValue, '(', 1)) AS DECIMAL(3,1))
+    AND u.UVLevel = TRIM(BOTH ')' FROM SUBSTRING_INDEX(s.UVValue, '(', -1))
+
 ) AS newrow
 ON DUPLICATE KEY UPDATE
     Day          = newrow.Day,

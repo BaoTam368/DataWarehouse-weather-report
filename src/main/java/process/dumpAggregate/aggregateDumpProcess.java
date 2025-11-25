@@ -1,0 +1,111 @@
+package process.dumpAggregate;
+
+import database.Control;
+import database.DBConnection;
+
+import java.io.BufferedWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.*;
+import java.time.LocalDateTime;
+import java.util.Objects;
+
+public class aggregateDumpProcess {
+
+    /**
+     * Dump bảng AggregateWeatherDaily -> file CSV
+     *
+     * @param sourceId  nguồn dữ liệu (config_source.source_id)
+     * @param outputPath đường dẫn file CSV muốn xuất (ví dụ: "D:/DW/aggregate/aggregate_daily.csv")
+     */
+    public void dumpAggregateToCsv(int sourceId, String outputPath) {
+
+        Timestamp startTime = Timestamp.valueOf(LocalDateTime.now());
+        boolean success = false;
+        long sizeBytes = 0;
+
+        Path out = Path.of(outputPath);
+
+        // 1. Đọc từ warehouse và ghi file
+        try (
+                Connection warehouseConn = DBConnection.connectDB("localhost", 3306, "root", "123456", "datawarehouse");
+                PreparedStatement ps = Objects.requireNonNull(warehouseConn).prepareStatement(
+                        "SELECT DateOnly, AvgTemp, MinTemp, MaxTemp, " +
+                                "AvgHumidity, AvgPressure, RowCount " +
+                                "FROM aggregate_weather_daily " +
+                                "ORDER BY DateOnly"
+                );
+                BufferedWriter writer = Files.newBufferedWriter(out, StandardCharsets.UTF_8)
+        ) {
+            writer.write("DateOnly,AvgTemp,MinTemp,MaxTemp,AvgHumidity,AvgPressure,RowCount");
+            writer.newLine();
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Date date = rs.getDate("DateOnly");
+                double avgTemp = rs.getDouble("AvgTemp");
+                double minTemp = rs.getDouble("MinTemp");
+                double maxTemp = rs.getDouble("MaxTemp");
+                double avgHumidity = rs.getDouble("AvgHumidity");
+                double avgPressure = rs.getDouble("AvgPressure");
+                int rc = rs.getInt("RowCount");
+
+                String line = String.format("%s,%.2f,%.2f,%.2f,%.2f,%.2f,%d",
+                        date.toString(),
+                        avgTemp,
+                        minTemp,
+                        maxTemp,
+                        avgHumidity,
+                        avgPressure,
+                        rc
+                );
+                writer.write(line);
+                writer.newLine();
+            }
+
+            writer.flush();
+            sizeBytes = Files.size(out);
+            success = true;
+            System.out.println("Dump aggregate -> CSV thành công! File: " + outputPath);
+
+        } catch (Exception e) {
+            System.out.println("Dump aggregate -> CSV thất bại!");
+            e.printStackTrace();
+        }
+
+        // 2. Ghi log (dù thành công hay thất bại vẫn cố log)
+        Timestamp endTime = Timestamp.valueOf(LocalDateTime.now());
+        try (Connection controlConn = DBConnection.connectDB("localhost", 3306, "root", "123456", "control")) {
+            if (controlConn == null) {
+                System.out.println("Không thể ghi log vì kết nối DB control thất bại");
+                return;
+            }
+
+            // ⚠ nhớ sửa insertFileLog cho khớp với cột count trong file_log
+            Control.insertFileLog(
+                    controlConn,
+                    sourceId,
+                    outputPath,
+                    startTime,
+                    (double) sizeBytes,       // size
+                    success ? "AGGREGATE_DUMP" : "AGGREGATE_DUMP_FAILED",
+                    endTime
+            );
+
+            Control.insertProcessLog(
+                    controlConn,
+                    sourceId,
+                    "DUMP_AGGREGATE",
+                    "Dump AggregateWeatherDaily to CSV",
+                    success ? "SUCCESS" : "FAILED",
+                    startTime,
+                    endTime
+            );
+        } catch (Exception e) {
+            System.out.println("Ghi log cho dump aggregate thất bại!");
+            e.printStackTrace();
+        }
+    }
+
+}

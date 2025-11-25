@@ -4,7 +4,7 @@
         <host>localhost</host>
         <port>3306</port>
         <user>root</user>
-        <password>1234</password>
+        <password>123456</password>
     </database>
 
     <source>
@@ -20,14 +20,23 @@
     </transaction>
 
     <aggregate>
-        <script>database/warehouse/aggregate_weather_daily.sql</script>
+        <scripts>database/warehouse/aggregate_weather_daily.sql</scripts>
     </aggregate>
 
     <mart>
-        <script>database/mart/mart_weather_daily_load.sql</script>
+        <scripts>database/mart/mart_weather_daily_load.sql</scripts>
     </mart>
 
     <email>23130116@st.hcmuaf.edu.vn</email>
 
+    <warehouse>
+        <script>database/warehouse/proc_load_warehouse.sql</script>
+        <procName>proc_load_warehouse</procName>
+    </warehouse>
+
+
+    <countSql>
+        <path>database/warehouse/count_tables.sql</path>
+    </countSql>
 
 </config>
