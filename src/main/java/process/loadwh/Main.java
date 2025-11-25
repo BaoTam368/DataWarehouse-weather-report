@@ -14,15 +14,19 @@ public class Main {
         try {
             // Load config.xml (để lấy script)
             XmlMapper mapper = new XmlMapper();
-            Config cfg = mapper.readValue(new File("config.xml"), Config.class);
+            Config config = mapper.readValue(new File("config.xml"), Config.class);
 
             // Connect DB
-            Connection controlConn = DBConnection.connectDB("localhost", 3306, "root", "123456", "control");
-            Connection warehouseConn = DBConnection.connectDB("localhost", 3306, "root", "123456", "datawarehouse");
-            Connection stagingConn = DBConnection.connectDB("localhost", 3306, "root", "123456", "staging");
+            String host = config.database.host;
+            int port = config.database.port;
+            String user = config.database.user;
+            String password = config.database.password;
+            Connection controlConn = DBConnection.connectDB(host, port, user, password, "control");
+            Connection warehouseConn = DBConnection.connectDB(host, port, user, password, "datawarehouse");
+            Connection stagingConn = DBConnection.connectDB(host, port, user, password, "staging");
 
             // Run load warehouse
-            LoadWarehouseProcess loader = new LoadWarehouseProcess(cfg);
+            LoadWarehouseProcess loader = new LoadWarehouseProcess(config);
             loader.runLoadWarehouse(controlConn, warehouseConn, stagingConn);
 
             // Close

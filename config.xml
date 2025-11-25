@@ -4,7 +4,7 @@
         <host>localhost</host>
         <port>3306</port>
         <user>root</user>
-        <password>123456</password>
+        <password>1234</password>
     </database>
 
     <source>
@@ -32,7 +32,11 @@
         <script>database/mart/mart_weather_daily_load.sql</script>
     </mart>
 
+    <warehouse>
+        <script>database/warehouse/proc_load_warehouse.sql</script>
+        <procName>proc_load_warehouse</procName>
+    </warehouse>
 
-    <email>23130365@st.hcmuaf.edu.vn</email>
+    <email>23130068@st.hcmuaf.edu.vn</email>
 
 </config>
