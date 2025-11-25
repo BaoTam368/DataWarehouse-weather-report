@@ -21,7 +21,7 @@
     </extract>
 
     <transaction>
-        <script>database/staging/transaction.sql</script>
+        <script>database/staging/transactionX.sql</script>
     </transaction>
 
     <warehouse>
