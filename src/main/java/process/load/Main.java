@@ -16,10 +16,10 @@ import java.util.Set;
 public class Main {
 
 
-    private static final Path FOLDER_PATH = Paths.get("D:\\DataWareHouse\\Data");
+    private static final Path FOLDER_PATH = Paths.get("data");
 
     // File log chứa danh sách file đã load rồi
-    private static final Path LOADED_LOG = Paths.get("D:\\DataWareHouse\\loaded_files.txt");
+    private static final Path LOADED_LOG = Paths.get("loaded_files.txt");
 
     private static final String INSERT_SQL =
             "INSERT INTO temp (FullDate, Weekday, Day, Temperature, UVValue, WindDirection, Humidity, DewPoint, Pressure, Cloud, Visibility, CloudCeiling) "
