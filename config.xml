@@ -4,7 +4,7 @@
         <host>localhost</host>
         <port>3306</port>
         <user>root</user>
-        <password>1234</password>
+        <password>123456</password>
     </database>
 
     <source>
@@ -33,6 +33,6 @@
     </mart>
 
 
-    <email>23130286@st.hcmuaf.edu.vn</email>
+    <email>23130365@st.hcmuaf.edu.vn</email>
 
 </config>
