@@ -7,6 +7,6 @@ import java.util.List;
 
 public class Aggregate {
     @JacksonXmlElementWrapper(useWrapping = false)
-    @JacksonXmlProperty(localName = "script")
+    @JacksonXmlProperty(localName = "scripts")
     public List<String> scripts;
 }
